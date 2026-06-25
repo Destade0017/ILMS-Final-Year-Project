@@ -747,7 +747,7 @@ const Dashboard = ({ token, user, logout }) => {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px 20px' }} className="fade-in">
       {/* HEADER SECTION */}
-      <header className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', marginBottom: '30px' }}>
+      <header className="card mobile-stack" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', marginBottom: '30px' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>ILMS Dashboard</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -982,8 +982,8 @@ const Dashboard = ({ token, user, logout }) => {
 
       {/* SELECTED COURSE DETAILS PANEL / MODAL */}
       {selectedCourse && (
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(15, 23, 42, 0.45)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100, padding: '20px' }}>
-          <div className="card fade-in" style={{ width: '100%', maxWidth: '750px', padding: '30px', maxHeight: '90vh', overflowY: 'auto', background: 'var(--bg-secondary)', display: 'flex', flexDirection: 'column' }}>
+        <div className="modal-overlay">
+          <div className="modal-content fade-in">
             
             {/* MODAL HEADER */}
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
@@ -1002,7 +1002,7 @@ const Dashboard = ({ token, user, logout }) => {
             </div>
 
             {/* TAB SYSTEM NAVIGATION */}
-            <div style={{ display: 'flex', gap: '20px', borderBottom: '1px solid var(--border-color)', paddingBottom: '10px', marginBottom: '20px' }}>
+            <div className="tabs-container" style={{ borderBottom: '1px solid var(--border-color)' }}>
               <button 
                 onClick={() => { setActiveTab('details'); setSelectedAssignment(null); setSelectedQuiz(null); }}
                 style={{ background: 'none', border: 'none', color: activeTab === 'details' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'details' ? '700' : '500', cursor: 'pointer', fontSize: '0.95rem', borderBottom: activeTab === 'details' ? '2px solid var(--primary)' : 'none', paddingBottom: '10px', transition: 'all 0.2s' }}
@@ -1307,7 +1307,7 @@ const Dashboard = ({ token, user, logout }) => {
                                 required
                               ></textarea>
                             </div>
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+                            <div className="form-row">
                               <div className="form-group">
                                 <label htmlFor="assignDueDate">Due Date</label>
                                 <input
@@ -1533,7 +1533,8 @@ const Dashboard = ({ token, user, logout }) => {
                           <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.9rem' }}>No students have attempted this quiz yet.</p>
                         ) : (
                           <div style={{ overflowX: 'auto' }}>
-                            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', textAlign: 'left' }}>
+                            <div className="table-responsive">
+<table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem', textAlign: 'left' }}>
                               <thead>
                                 <tr style={{ borderBottom: '1px solid var(--border-color)', color: 'var(--text-muted)' }}>
                                   <th style={{ padding: '10px' }}>Student</th>
@@ -1557,6 +1558,7 @@ const Dashboard = ({ token, user, logout }) => {
                                 ))}
                               </tbody>
                             </table>
+</div>
                           </div>
                         )}
                       </div>
@@ -1785,7 +1787,7 @@ const Dashboard = ({ token, user, logout }) => {
                 {isLecturer && showCreateMaterialForm && (
                   <form onSubmit={(e) => handleCreateMaterial(e, selectedCourse._id)} className="card" style={{ padding: '24px', marginBottom: '30px', background: 'rgba(0,0,0,0.02)' }}>
                     <h4 style={{ fontSize: '1.1rem', marginBottom: '16px' }}>Upload New Material</h4>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '15px' }}>
+                    <div className="form-row">
                       <div className="form-group">
                         <label>Title</label>
                         <input type="text" className="form-input" required value={matTitle} onChange={e => setMatTitle(e.target.value)} placeholder="e.g. Intro to Arrays" />
@@ -1800,7 +1802,7 @@ const Dashboard = ({ token, user, logout }) => {
                       </div>
                     </div>
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '15px' }}>
+                    <div className="form-row">
                       <div className="form-group">
                         <label>Content Type</label>
                         <select className="form-input" value={matContentType} onChange={e => setMatContentType(e.target.value)}>
@@ -1842,7 +1844,7 @@ const Dashboard = ({ token, user, logout }) => {
                     No materials found. {isLecturer && 'Add some to get started!'}
                   </div>
                 ) : (
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
+                  <div className="grid-cards">
                     {materials.map(mat => (
                       <div key={mat._id} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>

@@ -10,7 +10,7 @@ const AdminDashboard = ({ token, user, logout }) => {
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px 20px' }} className="fade-in">
       {/* HEADER SECTION */}
-      <header className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px 30px', marginBottom: '30px' }}>
+      <header className="card mobile-stack" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', marginBottom: '30px' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>ILMS Admin Workspace</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

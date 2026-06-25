@@ -161,7 +161,8 @@ const AdminCourseManagement = ({ token }) => {
       )}
 
       <div style={{ overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+        <div className="table-responsive">
+<table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
           <thead>
             <tr style={{ borderBottom: '2px solid rgba(0,0,0,0.1)' }}>
               <th style={{ padding: '12px' }}>Course Code</th>
@@ -210,6 +211,7 @@ const AdminCourseManagement = ({ token }) => {
             ))}
           </tbody>
         </table>
+</div>
       </div>
     </div>
   );

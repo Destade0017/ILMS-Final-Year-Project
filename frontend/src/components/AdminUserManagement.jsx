@@ -26,7 +26,7 @@ const AdminUserManagement = ({ token, user: currentUser }) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:5001/api/admin/users', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/users`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -72,7 +72,7 @@ const AdminUserManagement = ({ token, user: currentUser }) => {
     try {
       let res;
       if (isEditing) {
-        res = await fetch(`http://localhost:5001/api/admin/users/${editUserId}`, {
+        res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/users/${editUserId}`, {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -82,7 +82,7 @@ const AdminUserManagement = ({ token, user: currentUser }) => {
         });
       } else {
         if (!password) throw new Error('Password is required for new users');
-        res = await fetch('http://localhost:5001/api/admin/users', {
+        res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/users`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -112,7 +112,7 @@ const AdminUserManagement = ({ token, user: currentUser }) => {
     setSuccessMsg('');
     
     try {
-      const res = await fetch(`http://localhost:5001/api/admin/users/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/users/${id}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });

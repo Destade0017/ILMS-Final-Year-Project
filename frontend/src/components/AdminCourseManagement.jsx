@@ -23,10 +23,10 @@ const AdminCourseManagement = ({ token }) => {
     setError('');
     try {
       const [coursesRes, lecturersRes] = await Promise.all([
-        fetch('http://localhost:5001/api/admin/courses', {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/courses`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch('http://localhost:5001/api/admin/users?role=lecturer', {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/users?role=lecturer`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);
@@ -67,7 +67,7 @@ const AdminCourseManagement = ({ token }) => {
     }
 
     try {
-      const res = await fetch(`http://localhost:5001/api/admin/courses/${selectedCourseId}/assign`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/courses/${selectedCourseId}/assign`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ const AdminCourseManagement = ({ token }) => {
     setSuccessMsg('');
     
     try {
-      const res = await fetch(`http://localhost:5001/api/admin/courses/${courseId}/remove`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/courses/${courseId}/remove`, {
         method: 'PUT',
         headers: { 'Authorization': `Bearer ${token}` }
       });

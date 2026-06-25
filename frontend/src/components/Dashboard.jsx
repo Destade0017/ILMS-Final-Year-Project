@@ -94,7 +94,7 @@ const Dashboard = ({ token, user, logout }) => {
     setLoading(true);
     setError('');
     try {
-      const res = await fetch('http://localhost:5001/api/courses', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -124,7 +124,7 @@ const Dashboard = ({ token, user, logout }) => {
     setFormLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5001/api/courses', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -162,7 +162,7 @@ const Dashboard = ({ token, user, logout }) => {
     setError('');
     setSuccessMsg('');
     try {
-      const res = await fetch(`http://localhost:5001/api/courses/${courseId}/enroll`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses/${courseId}/enroll`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -188,7 +188,7 @@ const Dashboard = ({ token, user, logout }) => {
     setActiveTab('details');
     setSelectedAssignment(null);
     try {
-      const res = await fetch(`http://localhost:5001/api/courses/${courseId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses/${courseId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -216,7 +216,7 @@ const Dashboard = ({ token, user, logout }) => {
   const fetchCourseAssignments = async (courseId) => {
     setAssignmentsLoading(true);
     try {
-      const res = await fetch(`http://localhost:5001/api/assignments/course/${courseId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/assignments/course/${courseId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -246,7 +246,7 @@ const Dashboard = ({ token, user, logout }) => {
     setAssignFormLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5001/api/assignments', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/assignments`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -294,7 +294,7 @@ const Dashboard = ({ token, user, logout }) => {
       setSubmissionLoading(true);
       setStudentSubmission(null);
       try {
-        const res = await fetch(`http://localhost:5001/api/assignments/${assignment._id}/my-submission`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/assignments/${assignment._id}/my-submission`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -312,7 +312,7 @@ const Dashboard = ({ token, user, logout }) => {
       setSubmissionsLoading(true);
       setSubmissions([]);
       try {
-        const res = await fetch(`http://localhost:5001/api/assignments/${assignment._id}/submissions`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/assignments/${assignment._id}/submissions`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -342,7 +342,7 @@ const Dashboard = ({ token, user, logout }) => {
     setSubmitFormLoading(true);
 
     try {
-      const res = await fetch(`http://localhost:5001/api/assignments/${assignmentId}/submit`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/assignments/${assignmentId}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -384,7 +384,7 @@ const Dashboard = ({ token, user, logout }) => {
     setGradeFormLoading(true);
 
     try {
-      const res = await fetch(`http://localhost:5001/api/assignments/submissions/${submissionId}/grade`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/assignments/submissions/${submissionId}/grade`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -431,7 +431,7 @@ const Dashboard = ({ token, user, logout }) => {
   const fetchCourseMaterials = async (courseId, difficulty = 'all') => {
     setMaterialsLoading(true);
     try {
-      const url = new URL(`http://localhost:5001/api/materials/course/${courseId}`);
+      const url = new URL(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/materials/course/${courseId}`);
       if (difficulty !== 'all') {
         url.searchParams.append('difficulty', difficulty);
       }
@@ -461,7 +461,7 @@ const Dashboard = ({ token, user, logout }) => {
     setMaterialFormLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5001/api/materials', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/materials`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -503,7 +503,7 @@ const Dashboard = ({ token, user, logout }) => {
     setError('');
     setSuccessMsg('');
     try {
-      const res = await fetch(`http://localhost:5001/api/materials/${materialId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/materials/${materialId}`, {
         method: 'DELETE',
         headers: { 'Authorization': `Bearer ${token}` }
       });
@@ -521,7 +521,7 @@ const Dashboard = ({ token, user, logout }) => {
   const fetchCourseQuizzes = async (courseId) => {
     setQuizzesLoading(true);
     try {
-      const res = await fetch(`http://localhost:5001/api/quizzes/course/${courseId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/quizzes/course/${courseId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -548,7 +548,7 @@ const Dashboard = ({ token, user, logout }) => {
       setMyQuizAttemptLoading(true);
       setMyQuizAttempt(null);
       try {
-        const res = await fetch(`http://localhost:5001/api/quizzes/${quiz._id}/my-attempt`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/quizzes/${quiz._id}/my-attempt`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -566,7 +566,7 @@ const Dashboard = ({ token, user, logout }) => {
       setQuizAttemptsLoading(true);
       setQuizAttempts([]);
       try {
-        const res = await fetch(`http://localhost:5001/api/quizzes/${quiz._id}/attempts`, {
+        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/quizzes/${quiz._id}/attempts`, {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -603,7 +603,7 @@ const Dashboard = ({ token, user, logout }) => {
     setQuizFormLoading(true);
 
     try {
-      const res = await fetch('http://localhost:5001/api/quizzes', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/quizzes`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -655,7 +655,7 @@ const Dashboard = ({ token, user, logout }) => {
     setQuizSubmitting(true);
 
     try {
-      const res = await fetch(`http://localhost:5001/api/quizzes/${quizId}/submit`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/quizzes/${quizId}/submit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

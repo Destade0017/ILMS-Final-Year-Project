@@ -16,10 +16,10 @@ const AdminAnalytics = ({ token }) => {
     setError('');
     try {
       const [statsRes, actsRes] = await Promise.all([
-        fetch('http://localhost:5001/api/admin/stats', {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/stats`, {
           headers: { 'Authorization': `Bearer ${token}` }
         }),
-        fetch('http://localhost:5001/api/admin/activities', {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/admin/activities`, {
           headers: { 'Authorization': `Bearer ${token}` }
         })
       ]);

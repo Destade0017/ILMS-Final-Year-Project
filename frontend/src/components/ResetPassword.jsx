@@ -31,7 +31,7 @@ const ResetPassword = ({ token, setAuth, loginView }) => {
     setLoading(true);
 
     try {
-      const res = await fetch(`http://localhost:5001/api/auth/reset-password/${token}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/auth/reset-password/${token}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

@@ -1,5 +1,5 @@
 import express from 'express';
-import { getStudents, getLecturers } from '../controllers/userController.js';
+import { getStudents, getLecturers, updateUserProfile } from '../controllers/userController.js';
 import { protect } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
@@ -9,5 +9,6 @@ router.use(protect);
 
 router.get('/students', getStudents);
 router.get('/lecturers', getLecturers);
+router.put('/profile', updateUserProfile);
 
 export default router;

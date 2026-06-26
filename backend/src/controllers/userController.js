@@ -49,3 +49,44 @@ export const getLecturers = async (req, res) => {
         });
     }
 };
+
+/**
+ * @desc    Update user profile
+ * @route   PUT /api/users/profile
+ * @access  Private
+ */
+export const updateUserProfile = async (req, res) => {
+    try {
+        const user = await User.findById(req.user.id);
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        user.name = req.body.name || user.name;
+        user.email = req.body.email || user.email;
+
+        // If a new password is provided, update it (Mongoose pre-save hook handles hashing)
+        if (req.body.password) {
+            user.password = req.body.password;
+        }
+
+        const updatedUser = await user.save();
+
+        res.status(200).json({
+            success: true,
+            data: {
+                _id: updatedUser._id,
+                name: updatedUser.name,
+                email: updatedUser.email,
+                role: updatedUser.role
+            }
+        });
+    } catch (error) {
+        console.error('Update Profile Error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Server Error updating profile',
+        });
+    }
+};

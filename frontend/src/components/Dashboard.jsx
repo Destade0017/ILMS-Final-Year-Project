@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, AlertCircle, CheckCircle, FileText, ClipboardList, BookOpen, Users, LayoutDashboard, Settings } from 'lucide-react';
 
-const Dashboard = ({ token, user, logout }) => {
+const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');

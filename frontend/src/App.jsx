@@ -5,12 +5,14 @@ import ForgotPassword from './components/ForgotPassword';
 import ResetPassword from './components/ResetPassword';
 import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/AdminDashboard';
+import ProfileSettings from './components/ProfileSettings';
 function App() {
   const [token, setToken] = useState(null);
   const [user, setUser] = useState(null);
   const [authView, setAuthView] = useState('login'); // 'login' | 'register' | 'forgot' | 'reset'
   const [resetToken, setResetToken] = useState('');
   const [appLoading, setAppLoading] = useState(true);
+  const [mainView, setMainView] = useState('dashboard');
 
   // Check localStorage for existing session on load & handle url reset parameters
   useEffect(() => {
@@ -95,13 +97,24 @@ function App() {
     }
   }
 
-  // If logged in, render the main dashboard
+  // If logged in, render the main dashboard or profile
+  if (mainView === 'profile') {
+    return (
+      <ProfileSettings 
+        token={token} 
+        userRole={user.role} 
+        goBack={() => setMainView('dashboard')} 
+      />
+    );
+  }
+
   if (user.role === 'admin') {
     return (
       <AdminDashboard 
         token={token} 
         user={user} 
         logout={logout} 
+        goToProfile={() => setMainView('profile')}
       />
     );
   }
@@ -111,6 +124,7 @@ function App() {
       token={token} 
       user={user} 
       logout={logout} 
+      goToProfile={() => setMainView('profile')}
     />
   );
 }

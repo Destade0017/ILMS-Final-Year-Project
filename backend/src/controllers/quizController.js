@@ -2,6 +2,7 @@ import Quiz from '../models/Quiz.js';
 import QuizAttempt from '../models/QuizAttempt.js';
 import Course from '../models/Course.js';
 import AssessmentResult from '../models/AssessmentResult.js';
+import DiagnosticResult from '../models/DiagnosticResult.js';
 
 /**
  * @desc    Create a new quiz
@@ -257,7 +258,6 @@ export const submitQuiz = async (req, res) => {
         });
 
         // 7. Sync score to Academic Assessment Tracker (AssessmentResult)
-        // We normalize the score to a percentage (0 to 100) for summary consistency
         const percentageScore = (score / quiz.maxPoints) * 100;
         await AssessmentResult.findOneAndUpdate(
             {
@@ -277,12 +277,70 @@ export const submitQuiz = async (req, res) => {
             { upsert: true, returnDocument: 'after' }
         );
 
+        // 8. ADAPTIVE ENGINE: Re-evaluate student level based on rolling quiz average
+        //    Fetch ALL quiz attempts by this student in this course
+        const allAttempts = await QuizAttempt.find({ studentId: req.user._id })
+            .populate({ path: 'quizId', select: 'courseId maxPoints', match: { courseId: quiz.courseId } });
+
+        // Filter to only attempts that belong to this course (populated quizId won't be null)
+        const courseAttempts = allAttempts.filter(a => a.quizId !== null);
+
+        let levelUpdate = null;
+
+        if (courseAttempts.length > 0) {
+            const totalPct = courseAttempts.reduce((sum, a) => {
+                const pct = a.maxScore > 0 ? (a.score / a.maxScore) * 100 : 0;
+                return sum + pct;
+            }, 0);
+            const rollingAvg = totalPct / courseAttempts.length;
+
+            // Classify the new level
+            const newLevel = rollingAvg >= 80 ? 'Advanced'
+                : rollingAvg >= 50 ? 'Intermediate'
+                : 'Beginner';
+
+            // Check if the student already has a DiagnosticResult for this course
+            const existingResult = await DiagnosticResult.findOne({
+                studentId: req.user._id,
+                courseId: quiz.courseId,
+            });
+
+            const previousLevel = existingResult ? existingResult.level : null;
+
+            // Only update and notify if the level has actually changed (or no result yet)
+            if (!existingResult || existingResult.level !== newLevel) {
+                await DiagnosticResult.findOneAndUpdate(
+                    { studentId: req.user._id, courseId: quiz.courseId },
+                    {
+                        studentId: req.user._id,
+                        courseId: quiz.courseId,
+                        score: Math.round(rollingAvg),
+                        level: newLevel,
+                        source: 'quiz_performance',
+                    },
+                    { upsert: true, new: true, runValidators: true }
+                );
+
+                levelUpdate = {
+                    changed: true,
+                    previousLevel,
+                    newLevel,
+                    rollingAverage: Math.round(rollingAvg),
+                    quizzesTaken: courseAttempts.length,
+                };
+            }
+        }
+
         res.status(201).json({
             success: true,
             message: 'Quiz submitted and graded successfully',
             data: {
                 attempt,
-                correctAnswers: quiz.questions.map(q => q.correctAnswerIndex) // Return correct keys to student now that quiz is submitted
+                correctAnswers: quiz.questions.map(q => q.correctAnswerIndex),
+                score,
+                maxScore: quiz.maxPoints,
+                percentage: Math.round((score / quiz.maxPoints) * 100),
+                ...(levelUpdate && { levelUpdate }),
             },
         });
     } catch (error) {

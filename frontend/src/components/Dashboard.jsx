@@ -709,7 +709,26 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       }
 
       setSuccessMsg('Quiz submitted and auto-graded successfully!');
-      
+
+      // ADAPTIVE ENGINE: Handle level update notification
+      if (data.data?.levelUpdate) {
+        const { previousLevel, newLevel, rollingAverage } = data.data.levelUpdate;
+        const emoji = newLevel === 'Advanced' ? '🚀' : newLevel === 'Intermediate' ? '🔥' : '🌱';
+        const direction = previousLevel &&
+          (['Beginner', 'Intermediate', 'Advanced'].indexOf(newLevel) >
+           ['Beginner', 'Intermediate', 'Advanced'].indexOf(previousLevel))
+          ? 'levelled up' : previousLevel ? 'updated' : 'set';
+
+        setSuccessMsg(
+          `Quiz graded! ${emoji} Your learning level has been ${direction} to ${newLevel} ` +
+          `(quiz average: ${rollingAverage}%). Your materials have been refreshed!`
+        );
+        // Update the level badge in the materials tab immediately
+        setMyLevel(newLevel);
+        // Refresh materials to match new level
+        if (selectedCourse) fetchCourseMaterials(selectedCourse._id, matFilter);
+      }
+
       const updatedQuiz = { ...selectedQuiz };
       handleSelectQuiz(updatedQuiz);
     } catch (err) {

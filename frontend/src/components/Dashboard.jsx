@@ -93,6 +93,19 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [diagnosticCourseName, setDiagnosticCourseName] = useState('');
   const [myLevel, setMyLevel] = useState(null); // student's level for selected course
 
+  // Diagnostic Test lecturer state
+  const [existingDiagTest, setExistingDiagTest] = useState(null);
+  const [diagTestLoading, setDiagTestLoading] = useState(false);
+  const [showDiagCreateForm, setShowDiagCreateForm] = useState(false);
+  const [diagTitle, setDiagTitle] = useState('');
+  const [diagDesc, setDiagDesc] = useState('');
+  const [diagQuestions, setDiagQuestions] = useState([
+    { questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 }
+  ]);
+  const [diagFormLoading, setDiagFormLoading] = useState(false);
+  const [diagClassResults, setDiagClassResults] = useState(null);
+  const [diagClassLoading, setDiagClassLoading] = useState(false);
+
   // Load courses on component mount
   useEffect(() => {
     fetchCourses();
@@ -746,6 +759,111 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
     setQuizQuestions(updated);
   };
 
+  // DIAGNOSTIC TEST HELPERS (Lecturer)
+  const fetchDiagnosticTest = async (courseId) => {
+    setDiagTestLoading(true);
+    setExistingDiagTest(null);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/diagnostic/course/${courseId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setExistingDiagTest(data.data);
+        // Pre-fill form with existing test data
+        setDiagTitle(data.data.title);
+        setDiagDesc(data.data.description || '');
+        setDiagQuestions(data.data.questions.map(q => ({
+          questionText: q.questionText,
+          options: [...q.options],
+          correctAnswerIndex: q.correctAnswerIndex
+        })));
+      }
+    } catch (err) {
+      console.error('Error fetching diagnostic test:', err);
+    } finally {
+      setDiagTestLoading(false);
+    }
+  };
+
+  const fetchDiagClassResults = async (courseId) => {
+    setDiagClassLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/diagnostic/course/${courseId}/results`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (res.ok) setDiagClassResults(data);
+    } catch (err) {
+      console.error('Error fetching class diagnostic results:', err);
+    } finally {
+      setDiagClassLoading(false);
+    }
+  };
+
+  const handleCreateDiagTest = async (e, courseId) => {
+    e.preventDefault();
+    setError('');
+    setSuccessMsg('');
+
+    if (!diagTitle || diagQuestions.length === 0) {
+      setError('Please add a title and at least one question');
+      return;
+    }
+    for (const q of diagQuestions) {
+      if (!q.questionText.trim() || q.options.some(o => !o.trim())) {
+        setError('Please fill in all question texts and options');
+        return;
+      }
+    }
+
+    setDiagFormLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/diagnostic`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        body: JSON.stringify({ courseId, title: diagTitle, description: diagDesc, questions: diagQuestions })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to save diagnostic test');
+
+      setSuccessMsg('Diagnostic test saved successfully! Students will now be prompted to take it upon enrollment.');
+      setShowDiagCreateForm(false);
+      setExistingDiagTest(data.data);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setDiagFormLoading(false);
+    }
+  };
+
+  const handleDiagQuestionChange = (idx, text) => {
+    const updated = [...diagQuestions];
+    updated[idx].questionText = text;
+    setDiagQuestions(updated);
+  };
+
+  const handleDiagOptionChange = (qIdx, oIdx, val) => {
+    const updated = [...diagQuestions];
+    updated[qIdx].options[oIdx] = val;
+    setDiagQuestions(updated);
+  };
+
+  const handleDiagCorrectChange = (qIdx, val) => {
+    const updated = [...diagQuestions];
+    updated[qIdx].correctAnswerIndex = Number(val);
+    setDiagQuestions(updated);
+  };
+
+  const handleAddDiagQuestion = () => {
+    setDiagQuestions([...diagQuestions, { questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 }]);
+  };
+
+  const handleRemoveDiagQuestion = (idx) => {
+    if (diagQuestions.length === 1) return;
+    setDiagQuestions(diagQuestions.filter((_, i) => i !== idx));
+  };
+
   const handleCorrectAnswerIndexChange = (qIdx, val) => {
     const updated = [...quizQuestions];
     updated[qIdx].correctAnswerIndex = Number(val);
@@ -1089,6 +1207,21 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
               >
                 <BookOpen size={16} /> Materials
               </button>
+              {/* Diagnostic tab — lecturer/admin only */}
+              {isLecturer && (
+                <button
+                  onClick={() => {
+                    setActiveTab('diagnostic');
+                    setSelectedAssignment(null);
+                    setSelectedQuiz(null);
+                    fetchDiagnosticTest(selectedCourse._id);
+                    fetchDiagClassResults(selectedCourse._id);
+                  }}
+                  style={{ background: 'none', border: 'none', color: activeTab === 'diagnostic' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'diagnostic' ? '700' : '500', cursor: 'pointer', fontSize: '0.95rem', borderBottom: activeTab === 'diagnostic' ? '2px solid var(--primary)' : 'none', paddingBottom: '10px', transition: 'all 0.2s' }}
+                >
+                  🎯 Diagnostic
+                </button>
+              )}
             </div>
 
             {/* TAB CONTENT 1: COURSE MEMBERS DETAILS */}
@@ -1980,6 +2113,199 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                       </div>
                     ))}
                   </div>
+                )}
+              </div>
+            )}
+
+            {/* TAB CONTENT: DIAGNOSTIC (Lecturer only) */}
+            {activeTab === 'diagnostic' && isLecturer && (
+              <div className="fade-in">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+                  <h3 style={{ fontSize: '1.2rem', margin: 0 }}>🎯 Diagnostic Test Manager</h3>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => {
+                      if (!showDiagCreateForm && !existingDiagTest) {
+                        setDiagTitle('Course Diagnostic Test');
+                        setDiagDesc('Complete this short test so we can personalise your learning materials.');
+                        setDiagQuestions([{ questionText: '', options: ['', '', '', ''], correctAnswerIndex: 0 }]);
+                      }
+                      setShowDiagCreateForm(!showDiagCreateForm);
+                    }}
+                  >
+                    {showDiagCreateForm ? 'Cancel' : existingDiagTest ? '✏️ Edit Test' : '＋ Create Test'}
+                  </button>
+                </div>
+
+                {/* Class Results Summary */}
+                {diagClassLoading ? (
+                  <p style={{ color: 'var(--text-secondary)' }}>Loading class results...</p>
+                ) : diagClassResults && diagClassResults.summary ? (
+                  <div className="card" style={{ padding: '20px', marginBottom: '24px' }}>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem' }}>📊 Class Level Breakdown</h4>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+                      {[
+                        { label: '🌱 Beginner', key: 'Beginner', color: '#2e7d32', bg: '#e8f5e9' },
+                        { label: '🔥 Intermediate', key: 'Intermediate', color: '#f57f17', bg: '#fff8e1' },
+                        { label: '🚀 Advanced', key: 'Advanced', color: '#c62828', bg: '#fce4ec' },
+                      ].map(({ label, key, color, bg }) => (
+                        <div key={key} style={{ background: bg, borderRadius: 'var(--radius)', padding: '16px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '1.8rem', fontWeight: '800', color }}>{diagClassResults.summary[key] || 0}</div>
+                          <div style={{ fontSize: '0.85rem', color, fontWeight: '600' }}>{label}</div>
+                        </div>
+                      ))}
+                    </div>
+                    <p style={{ margin: 0, fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+                      {diagClassResults.summary.total} of {selectedCourse.students.length} enrolled students have completed the diagnostic.
+                    </p>
+
+                    {/* Per-student results */}
+                    {diagClassResults.data && diagClassResults.data.length > 0 && (
+                      <div style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+                        <h5 style={{ margin: '0 0 12px 0', fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em' }}>Student Results</h5>
+                        <div style={{ maxHeight: '200px', overflowY: 'auto' }}>
+                          {diagClassResults.data.map(r => (
+                            <div key={r._id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 0', borderBottom: '1px solid var(--border)', fontSize: '0.9rem' }}>
+                              <span style={{ fontWeight: '500' }}>{r.studentId?.name || 'Student'}</span>
+                              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                                <span style={{ color: 'var(--text-secondary)' }}>{r.score}%</span>
+                                <span style={{
+                                  padding: '2px 10px', borderRadius: '12px', fontSize: '0.8rem', fontWeight: '700',
+                                  background: r.level === 'Advanced' ? '#fce4ec' : r.level === 'Intermediate' ? '#fff8e1' : '#e8f5e9',
+                                  color: r.level === 'Advanced' ? '#c62828' : r.level === 'Intermediate' ? '#f57f17' : '#2e7d32'
+                                }}>{r.level}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="card" style={{ padding: '20px', marginBottom: '24px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+                    <p style={{ margin: 0 }}>No students have taken the diagnostic test yet.</p>
+                  </div>
+                )}
+
+                {/* Current Test Preview (when not editing) */}
+                {!showDiagCreateForm && existingDiagTest && (
+                  <div className="card" style={{ padding: '20px', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h4 style={{ margin: 0, fontSize: '1rem' }}>📋 Current Test: {existingDiagTest.title}</h4>
+                      <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{existingDiagTest.questions.length} questions</span>
+                    </div>
+                    {existingDiagTest.questions.map((q, qi) => (
+                      <div key={qi} style={{ marginBottom: '12px', padding: '12px', background: 'rgba(0,0,0,0.02)', borderRadius: 'var(--radius)' }}>
+                        <p style={{ margin: '0 0 8px 0', fontWeight: '600', fontSize: '0.9rem' }}>Q{qi + 1}. {q.questionText}</p>
+                        {q.options.map((opt, oi) => (
+                          <div key={oi} style={{ fontSize: '0.85rem', color: oi === q.correctAnswerIndex ? '#2e7d32' : 'var(--text-secondary)', fontWeight: oi === q.correctAnswerIndex ? '700' : '400', marginLeft: '12px' }}>
+                            {oi === q.correctAnswerIndex ? '✅' : '○'} {opt}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {!showDiagCreateForm && !existingDiagTest && !diagTestLoading && (
+                  <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
+                    <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📝</div>
+                    <p>No diagnostic test created yet. Click <strong>"Create Test"</strong> above to add one.</p>
+                    <p style={{ fontSize: '0.85rem' }}>Students will be prompted to take it automatically when they enroll.</p>
+                  </div>
+                )}
+
+                {/* Create / Edit Form */}
+                {showDiagCreateForm && (
+                  <form onSubmit={(e) => handleCreateDiagTest(e, selectedCourse._id)} className="card" style={{ padding: '24px' }}>
+                    <h4 style={{ fontSize: '1.1rem', marginBottom: '20px' }}>{existingDiagTest ? 'Edit' : 'Create'} Diagnostic Test</h4>
+
+                    <div className="form-group" style={{ marginBottom: '16px' }}>
+                      <label>Test Title</label>
+                      <input
+                        type="text" className="form-input" required
+                        value={diagTitle} onChange={e => setDiagTitle(e.target.value)}
+                        placeholder="e.g. CSC 407 Placement Test"
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ marginBottom: '24px' }}>
+                      <label>Instructions (shown to students)</label>
+                      <textarea
+                        className="form-input" rows={2}
+                        value={diagDesc} onChange={e => setDiagDesc(e.target.value)}
+                        placeholder="e.g. Answer all questions. This helps us personalise your learning materials."
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h4 style={{ margin: 0, fontSize: '1rem' }}>Questions ({diagQuestions.length})</h4>
+                      <button type="button" className="btn btn-secondary" onClick={handleAddDiagQuestion} style={{ padding: '6px 14px', fontSize: '0.85rem' }}>
+                        ＋ Add Question
+                      </button>
+                    </div>
+
+                    {diagQuestions.map((q, qi) => (
+                      <div key={qi} className="card" style={{ padding: '20px', marginBottom: '16px', background: 'rgba(0,0,0,0.02)', border: '1px solid var(--border)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                          <span style={{ fontWeight: '700', color: 'var(--primary)' }}>Question {qi + 1}</span>
+                          {diagQuestions.length > 1 && (
+                            <button type="button" onClick={() => handleRemoveDiagQuestion(qi)} style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.85rem' }}>Remove</button>
+                          )}
+                        </div>
+
+                        <div className="form-group" style={{ marginBottom: '14px' }}>
+                          <label>Question Text</label>
+                          <input
+                            type="text" className="form-input" required
+                            value={q.questionText} onChange={e => handleDiagQuestionChange(qi, e.target.value)}
+                            placeholder="e.g. What does CPU stand for?"
+                          />
+                        </div>
+
+                        <label style={{ fontSize: '0.85rem', fontWeight: '600', display: 'block', marginBottom: '8px', color: 'var(--text-secondary)' }}>Answer Options</label>
+                        {q.options.map((opt, oi) => (
+                          <div key={oi} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                            <input
+                              type="radio" name={`correct-${qi}`}
+                              checked={q.correctAnswerIndex === oi}
+                              onChange={() => handleDiagCorrectChange(qi, oi)}
+                              title="Mark as correct answer"
+                              style={{ accentColor: 'var(--primary)', width: '18px', height: '18px', flexShrink: 0 }}
+                            />
+                            <input
+                              type="text" className="form-input" required
+                              value={opt} onChange={e => handleDiagOptionChange(qi, oi, e.target.value)}
+                              placeholder={`Option ${oi + 1}`}
+                              style={{ flex: 1 }}
+                            />
+                            {q.options.length > 2 && (
+                              <button type="button" onClick={() => {
+                                const updated = [...diagQuestions];
+                                updated[qi].options.splice(oi, 1);
+                                if (updated[qi].correctAnswerIndex >= updated[qi].options.length) updated[qi].correctAnswerIndex = 0;
+                                setDiagQuestions([...updated]);
+                              }} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '1.1rem' }}>✕</button>
+                            )}
+                          </div>
+                        ))}
+                        <button type="button" onClick={() => {
+                          const updated = [...diagQuestions];
+                          updated[qi].options.push('');
+                          setDiagQuestions([...updated]);
+                        }} style={{ background: 'none', border: 'none', color: 'var(--primary)', cursor: 'pointer', fontSize: '0.85rem', marginTop: '4px' }}>
+                          ＋ Add Option
+                        </button>
+                        <p style={{ margin: '8px 0 0 0', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                          Click the radio button next to the correct answer.
+                        </p>
+                      </div>
+                    ))}
+
+                    <button type="submit" className="btn btn-primary" disabled={diagFormLoading} style={{ width: '100%', padding: '12px', marginTop: '8px' }}>
+                      {diagFormLoading ? 'Saving...' : existingDiagTest ? '💾 Update Test' : '💾 Save & Publish Test'}
+                    </button>
+                  </form>
                 )}
               </div>
             )}

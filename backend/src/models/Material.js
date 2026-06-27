@@ -49,10 +49,10 @@ const materialSchema = new mongoose.Schema(
             type: String,
             required: [true, 'Please specify the difficulty level'],
             enum: {
-                values: ['easy', 'medium', 'hard'],
-                message: '{VALUE} is not a valid difficulty level (must be: easy, medium, hard)',
+                values: ['Beginner', 'Intermediate', 'Advanced', 'All'],
+                message: '{VALUE} is not a valid difficulty level (must be: Beginner, Intermediate, Advanced, All)',
             },
-            default: 'medium',
+            default: 'Beginner',
         },
     },
     {

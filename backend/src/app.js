@@ -10,6 +10,7 @@ import assignmentRoutes from './routes/assignmentRoutes.js';
 import materialRoutes from './routes/materialRoutes.js';
 import quizRoutes from './routes/quizRoutes.js';
 import adminRoutes from './routes/adminRoutes.js';
+import diagnosticRoutes from './routes/diagnosticRoutes.js';
 const app = express();
 
 // Middlewares
@@ -39,6 +40,7 @@ app.use('/api/assignments', assignmentRoutes);
 app.use('/api/materials', materialRoutes);
 app.use('/api/quizzes', quizRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/diagnostic', diagnosticRoutes);
 // Base Routes
 app.get('/', (req, res) => {
     res.json({

@@ -1,6 +1,6 @@
 import Material from '../models/Material.js';
 import Course from '../models/Course.js';
-import AssessmentResult from '../models/AssessmentResult.js';
+import DiagnosticResult from '../models/DiagnosticResult.js';
 
 /**
  * @desc    Create a new course learning material
@@ -103,52 +103,50 @@ export const getCourseMaterials = async (req, res) => {
         const query = { courseId };
         let adaptiveStats = null;
 
-        if (difficulty) {
-            const requestedDiff = difficulty.toLowerCase();
-            
-            if (requestedDiff === 'adaptive') {
-                // Adaptive Engine Logic
-                // a. Only run for students (lecturers/admins seeing 'adaptive' should just see all, or we calculate for a specific student if passed, but typically this is student-facing)
-                if (isStudent) {
-                    // b. Fetch all assessment results for this student in this course
-                    const results = await AssessmentResult.find({ 
-                        studentId: req.user._id, 
-                        courseId: courseId 
-                    });
+        if (difficulty && difficulty.toLowerCase() === 'adaptive') {
+            if (isStudent) {
+                // Look up the student's level from their DiagnosticResult
+                const diagnosticResult = await DiagnosticResult.findOne({
+                    studentId: req.user._id,
+                    courseId,
+                });
 
-                    let avgScore = 0;
-                    let recommendedLevel = 'easy'; // Default if no scores
-
-                    if (results.length > 0) {
-                        const totalScore = results.reduce((sum, res) => sum + res.score, 0);
-                        avgScore = totalScore / results.length;
-
-                        // c. Threshold Algorithm
-                        if (avgScore < 50) {
-                            recommendedLevel = 'easy';
-                        } else if (avgScore >= 50 && avgScore < 80) {
-                            recommendedLevel = 'medium';
-                        } else {
-                            recommendedLevel = 'hard';
-                        }
-                    }
-
-                    query.difficultyLevel = recommendedLevel;
+                if (diagnosticResult) {
+                    // Filter materials: match the student's level OR materials tagged for 'All'
+                    query.$or = [
+                        { difficultyLevel: diagnosticResult.level },
+                        { difficultyLevel: 'All' },
+                    ];
                     adaptiveStats = {
                         isAdaptive: true,
-                        averageScore: Number(avgScore.toFixed(1)),
-                        recommendedLevel,
-                        assessmentCount: results.length
+                        level: diagnosticResult.level,
+                        score: diagnosticResult.score,
+                        source: diagnosticResult.source,
+                    };
+                } else {
+                    // No diagnostic taken yet — show Beginner materials as default
+                    query.$or = [
+                        { difficultyLevel: 'Beginner' },
+                        { difficultyLevel: 'All' },
+                    ];
+                    adaptiveStats = {
+                        isAdaptive: true,
+                        level: 'Beginner',
+                        score: null,
+                        source: 'default',
                     };
                 }
-            } else if (['easy', 'medium', 'hard'].includes(requestedDiff)) {
-                query.difficultyLevel = requestedDiff;
-            } else if (requestedDiff !== 'all') {
+            }
+            // Lecturers/Admins using 'adaptive' see everything
+        } else if (difficulty && difficulty.toLowerCase() !== 'all') {
+            const validLevels = ['Beginner', 'Intermediate', 'Advanced', 'All'];
+            if (!validLevels.includes(difficulty)) {
                 return res.status(400).json({
                     success: false,
-                    message: 'Invalid difficulty filter. Must be all, adaptive, easy, medium, or hard',
+                    message: 'Invalid difficulty filter. Must be: all, adaptive, Beginner, Intermediate, Advanced',
                 });
             }
+            query.difficultyLevel = difficulty;
         }
 
         // 4. Fetch materials

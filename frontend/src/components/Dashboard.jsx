@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, AlertCircle, CheckCircle, FileText, ClipboardList, BookOpen, Users, LayoutDashboard, Settings } from 'lucide-react';
+import DiagnosticTest from './DiagnosticTest.jsx';
 
 const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [courses, setCourses] = useState([]);
@@ -86,6 +87,12 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [matFilter, setMatFilter] = useState('adaptive');
   const [adaptiveStats, setAdaptiveStats] = useState(null);
 
+  // Diagnostic Test state
+  const [showDiagnostic, setShowDiagnostic] = useState(false);
+  const [diagnosticCourseId, setDiagnosticCourseId] = useState(null);
+  const [diagnosticCourseName, setDiagnosticCourseName] = useState('');
+  const [myLevel, setMyLevel] = useState(null); // student's level for selected course
+
   // Load courses on component mount
   useEffect(() => {
     fetchCourses();
@@ -159,7 +166,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
     }
   };
 
-  const handleEnroll = async (courseId) => {
+  const handleEnroll = async (courseId, courseName) => {
     setError('');
     setSuccessMsg('');
     try {
@@ -176,9 +183,12 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       }
 
       setSuccessMsg(data.message || 'Enrolled successfully!');
-      
-      // Refresh course list to update enrollment count/button states
       fetchCourses();
+
+      // Open the diagnostic test immediately after enrollment
+      setDiagnosticCourseId(courseId);
+      setDiagnosticCourseName(courseName);
+      setShowDiagnostic(true);
     } catch (err) {
       setError(err.message);
     }
@@ -188,6 +198,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
     setDetailsLoading(true);
     setActiveTab('details');
     setSelectedAssignment(null);
+    setMyLevel(null);
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses/${courseId}`, {
         headers: {
@@ -200,12 +211,20 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       }
       setSelectedCourse(data.data);
       
-      // Load assignments for this course in the background
+      // Load assignments, quizzes, materials in background
       fetchCourseAssignments(courseId);
-      // Load quizzes for this course in the background
       fetchCourseQuizzes(courseId);
-      // Load materials for this course in the background
       fetchCourseMaterials(courseId, matFilter);
+
+      // For students: fetch their current diagnostic level for this course
+      if (isStudent) {
+        fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/diagnostic/course/${courseId}/my-result`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        })
+          .then(r => r.json())
+          .then(d => { if (d.success) setMyLevel(d.data.level); })
+          .catch(() => {});
+      }
     } catch (err) {
       setError(err.message);
     } finally {
@@ -975,7 +994,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                         <button 
                           className="btn btn-primary" 
                           style={{ padding: '8px 16px', fontSize: '0.85rem' }}
-                          onClick={() => handleEnroll(course._id)}
+                          onClick={() => handleEnroll(course._id, course.title)}
                         >
                           Enroll
                         </button>
@@ -987,6 +1006,39 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
             </section>
           )}
 
+        </div>
+      )}
+
+      {/* DIAGNOSTIC TEST OVERLAY - Shown after enrollment */}
+      {showDiagnostic && diagnosticCourseId && (
+        <div className="modal-overlay">
+          <div className="modal-content fade-in" style={{ maxWidth: '780px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>
+              <div>
+                <h2 style={{ fontSize: '1.3rem', margin: 0 }}>Placement Diagnostic</h2>
+                <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{diagnosticCourseName}</p>
+              </div>
+              <button
+                onClick={() => { setShowDiagnostic(false); setDiagnosticCourseId(null); }}
+                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
+              >✕</button>
+            </div>
+            <DiagnosticTest
+              token={token}
+              courseId={diagnosticCourseId}
+              courseName={diagnosticCourseName}
+              onComplete={(level) => {
+                setMyLevel(level);
+                setShowDiagnostic(false);
+                setDiagnosticCourseId(null);
+                setSuccessMsg(`Diagnostic complete! You are classified as ${level}. Your materials have been personalised.`);
+              }}
+              onSkip={() => {
+                setShowDiagnostic(false);
+                setDiagnosticCourseId(null);
+              }}
+            />
+          </div>
         </div>
       )}
 
@@ -1794,6 +1846,28 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                     </button>
                   )}
                 </div>
+
+                {/* Level Badge for Students */}
+                {isStudent && myLevel && (
+                  <div style={{ marginBottom: '20px', display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: myLevel === 'Advanced' ? '#fce4ec' : myLevel === 'Intermediate' ? '#fff8e1' : '#e8f5e9', borderRadius: '20px' }}>
+                    <span style={{ fontSize: '1.1rem' }}>{myLevel === 'Advanced' ? '🚀' : myLevel === 'Intermediate' ? '🔥' : '🌱'}</span>
+                    <span style={{ fontWeight: '700', color: myLevel === 'Advanced' ? '#c62828' : myLevel === 'Intermediate' ? '#f57f17' : '#2e7d32', fontSize: '0.9rem' }}>Your Level: {myLevel}</span>
+                    <button
+                      onClick={() => { setDiagnosticCourseId(selectedCourse._id); setDiagnosticCourseName(selectedCourse.title); setShowDiagnostic(true); }}
+                      style={{ background: 'none', border: 'none', fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
+                    >Retake test</button>
+                  </div>
+                )}
+                {isStudent && !myLevel && (
+                  <div style={{ marginBottom: '20px', padding: '12px 16px', background: 'var(--primary-light)', borderRadius: 'var(--radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>📋 Take the diagnostic test to unlock personalised materials.</span>
+                    <button
+                      className="btn btn-primary"
+                      style={{ padding: '6px 14px', fontSize: '0.85rem' }}
+                      onClick={() => { setDiagnosticCourseId(selectedCourse._id); setDiagnosticCourseName(selectedCourse.title); setShowDiagnostic(true); }}
+                    >Take Test</button>
+                  </div>
+                )}
 
                 {adaptiveStats && (
                   <div className="fade-in" style={{ padding: '16px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: 'var(--radius)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>

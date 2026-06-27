@@ -4,6 +4,7 @@ import {
     getCourses,
     getCourseById,
     enrollInCourse,
+    deleteCourse,
 } from '../controllers/courseController.js';
 import { protect, authorize } from '../middleware/authMiddleware.js';
 
@@ -21,5 +22,8 @@ router.post('/', authorize('lecturer', 'admin'), createCourse);
 
 // Restricted to Students (Course enrollment)
 router.post('/:id/enroll', authorize('student'), enrollInCourse);
+
+// Restricted to Admins (Course deletion)
+router.delete('/:id', authorize('admin'), deleteCourse);
 
 export default router;

@@ -1,4 +1,12 @@
 import Course from '../models/Course.js';
+import Material from '../models/Material.js';
+import Quiz from '../models/Quiz.js';
+import QuizAttempt from '../models/QuizAttempt.js';
+import DiagnosticTest from '../models/DiagnosticTest.js';
+import DiagnosticResult from '../models/DiagnosticResult.js';
+import Assignment from '../models/Assignment.js';
+import Submission from '../models/Submission.js';
+import AssessmentResult from '../models/AssessmentResult.js';
 
 /**
  * @desc    Create a new course
@@ -160,6 +168,77 @@ export const enrollInCourse = async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Server Error during course enrollment',
+        });
+    }
+};
+
+/**
+ * @desc    Delete a course and all associated data
+ * @route   DELETE /api/courses/:id
+ * @access  Private (Admin only)
+ */
+export const deleteCourse = async (req, res) => {
+    const { id } = req.params;
+
+    try {
+        if (req.user.role !== 'admin') {
+            return res.status(403).json({
+                success: false,
+                message: 'Access Denied: Only administrators can delete courses',
+            });
+        }
+
+        const course = await Course.findById(id);
+
+        if (!course) {
+            return res.status(404).json({
+                success: false,
+                message: 'Course not found',
+            });
+        }
+
+        // CASCADING DELETE LOGIC
+
+        // 1. Delete all materials
+        await Material.deleteMany({ courseId: id });
+
+        // 2. Delete all quizzes and their attempts
+        const quizzes = await Quiz.find({ courseId: id });
+        const quizIds = quizzes.map(q => q._id);
+        await QuizAttempt.deleteMany({ quizId: { $in: quizIds } });
+        await Quiz.deleteMany({ courseId: id });
+
+        // 3. Delete diagnostic tests and results
+        await DiagnosticTest.deleteMany({ courseId: id });
+        await DiagnosticResult.deleteMany({ courseId: id });
+
+        // 4. Delete assignments and their submissions
+        const assignments = await Assignment.find({ courseId: id });
+        const assignmentIds = assignments.map(a => a._id);
+        await Submission.deleteMany({ assignment: { $in: assignmentIds } });
+        await Assignment.deleteMany({ courseId: id });
+
+        // 5. Delete assessment results
+        await AssessmentResult.deleteMany({ courseId: id });
+
+        // 6. Finally, delete the course itself
+        await Course.findByIdAndDelete(id);
+
+        res.status(200).json({
+            success: true,
+            message: 'Course and all associated data permanently deleted',
+        });
+    } catch (error) {
+        console.error('Delete Course Error:', error);
+        if (error.kind === 'ObjectId') {
+            return res.status(404).json({
+                success: false,
+                message: 'Course not found (invalid ID format)',
+            });
+        }
+        res.status(500).json({
+            success: false,
+            message: 'Server Error during course deletion',
         });
     }
 };

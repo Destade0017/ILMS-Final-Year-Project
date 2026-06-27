@@ -15,6 +15,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [newDesc, setNewDesc] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [deleteCourseLoading, setDeleteCourseLoading] = useState(false);
 
   // Selected course details modal/drawer state
   const [selectedCourse, setSelectedCourse] = useState(null);
@@ -174,6 +175,43 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       toast.error(err.message);
     } finally {
       setFormLoading(false);
+    }
+  };
+
+  const handleDeleteCourse = async (courseId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone and will delete all associated materials, quizzes, and results.')) {
+      return;
+    }
+
+    setDeleteCourseLoading(true);
+
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses/${courseId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to delete course');
+      }
+
+      toast.success(data.message || 'Course deleted successfully');
+      
+      // Remove from local state
+      setCourses(courses.filter(c => c._id !== courseId));
+      
+      // If we are currently viewing the deleted course, close the modal
+      if (selectedCourse && selectedCourse._id === courseId) {
+        setSelectedCourse(null);
+      }
+    } catch (err) {
+      toast.error(err.message);
+    } finally {
+      setDeleteCourseLoading(false);
     }
   };
 
@@ -1244,6 +1282,22 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                     </ul>
                   )}
                 </div>
+
+                {user.role === 'admin' && (
+                  <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
+                    <h4 style={{ fontSize: '0.9rem', color: 'var(--error)', marginBottom: '10px' }}>Danger Zone</h4>
+                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px' }}>
+                      Permanently delete this course and all associated materials, quizzes, and submissions. This action cannot be undone.
+                    </p>
+                    <button 
+                      className="btn btn-danger" 
+                      onClick={() => handleDeleteCourse(selectedCourse._id)}
+                      disabled={deleteCourseLoading}
+                    >
+                      {deleteCourseLoading ? 'Deleting...' : 'Delete Course'}
+                    </button>
+                  </div>
+                )}
               </div>
             )}
 

@@ -536,3 +536,24 @@ tbody tr:hover {
     max-width: 100%;
   }
 }
+
+/* ==========================================================================
+   Skeleton Loading States
+   ========================================================================== */
+
+@keyframes shimmer {
+  0%   { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
+}
+
+.skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    #f0f0f0 25%,
+    #e0e0e0 37%,
+    #f0f0f0 63%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}

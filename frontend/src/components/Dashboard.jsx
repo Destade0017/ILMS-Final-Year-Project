@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { LogOut, AlertCircle, CheckCircle, FileText, ClipboardList, BookOpen, Users, LayoutDashboard, Settings } from 'lucide-react';
 import DiagnosticTest from './DiagnosticTest.jsx';
 import { ToastContainer, useToast } from './Toast.jsx';
+import { SkeletonDashboard, SkeletonList, SkeletonMaterialGrid } from './Skeleton.jsx';
 
 const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [courses, setCourses] = useState([]);
@@ -903,8 +904,8 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
       {/* DASHBOARD GRID CONTENT */}
       {loading ? (
-        <div style={{ textAlign: 'center', padding: '50px', fontSize: '1.2rem', color: 'var(--text-secondary)' }}>
-          Loading your courses...
+        <div style={{ padding: '30px 0' }}>
+          <SkeletonDashboard />
         </div>
       ) : (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '30px' }}>
@@ -1278,7 +1279,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                     {isStudent && (
                       <div>
                         {submissionLoading ? (
-                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading your submission details...</p>
+                          <SkeletonList count={2} />
                         ) : studentSubmission ? (
                           // CASE 1: Student has already submitted coursework
                           <div className="card" style={{ padding: '20px', borderLeft: `4px solid ${studentSubmission.status === 'graded' ? 'var(--success)' : 'var(--warning)'}` }}>
@@ -1349,7 +1350,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                       <div>
                         <h4 style={{ fontSize: '1rem', marginBottom: '12px' }}>Student Submissions ({submissions.length})</h4>
                         {submissionsLoading ? (
-                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading submissions list...</p>
+                          <SkeletonList count={3} showAvatar />
                         ) : submissions.length === 0 ? (
                           <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.9rem' }}>No student submissions yet.</p>
                         ) : (
@@ -1516,7 +1517,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
                     {/* ASSIGNMENTS LIST */}
                     {assignmentsLoading ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Loading course assignments...</p>
+                      <SkeletonList count={4} />
                     ) : assignments.length === 0 ? (
                       <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.95rem', padding: '20px 0' }}>
                         No assignments created for this course yet.
@@ -1578,7 +1579,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                     {isStudent && (
                       <div>
                         {myQuizAttemptLoading ? (
-                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading quiz details...</p>
+                          <SkeletonList count={2} />
                         ) : myQuizAttempt && myQuizAttempt.attempt ? (
                           // CASE 1: Student has already taken the quiz (Show results and review)
                           <div className="card" style={{ padding: '20px', borderLeft: '4px solid var(--success)' }}>
@@ -1702,7 +1703,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                       <div className="card" style={{ padding: '20px' }}>
                         <h4 style={{ fontSize: '1.1rem', marginBottom: '15px' }}>Student Performance Attempts ({quizAttempts.length})</h4>
                         {quizAttemptsLoading ? (
-                          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>Loading attempts...</p>
+                          <SkeletonList count={3} showAvatar />
                         ) : quizAttempts.length === 0 ? (
                           <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.9rem' }}>No students have attempted this quiz yet.</p>
                         ) : (
@@ -1897,7 +1898,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
                     {/* QUIZZES LIST */}
                     {quizzesLoading ? (
-                      <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>Loading course quizzes...</p>
+                      <SkeletonList count={4} />
                     ) : quizzes.length === 0 ? (
                       <p style={{ fontStyle: 'italic', color: 'var(--text-muted)', fontSize: '0.95rem', padding: '20px 0' }}>
                         No quizzes created for this course yet.
@@ -2050,7 +2051,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                 )}
 
                 {materialsLoading ? (
-                  <div style={{ textAlign: 'center', padding: '30px', color: 'var(--text-secondary)' }}>Loading materials...</div>
+                  <SkeletonMaterialGrid count={4} />
                 ) : materials.length === 0 ? (
                   <div className="card" style={{ padding: '30px', textAlign: 'center', color: 'var(--text-muted)' }}>
                     No materials found. {isLecturer && 'Add some to get started!'}

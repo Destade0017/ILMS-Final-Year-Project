@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { LogOut, AlertCircle, CheckCircle, FileText, ClipboardList, BookOpen, Users, LayoutDashboard, Settings } from 'lucide-react';
 import DiagnosticTest from './DiagnosticTest.jsx';
+import { ToastContainer, useToast } from './Toast.jsx';
 
 const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
+  const { toasts, removeToast, toast } = useToast();
   
   // Lecturer course creation form state
   const [newTitle, setNewTitle] = useState('');
@@ -113,7 +113,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const fetchCourses = async () => {
     setLoading(true);
-    setError('');
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses`, {
         headers: {
@@ -126,7 +125,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       }
       setCourses(data.data);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setLoading(false);
     }
@@ -134,11 +133,9 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const handleCreateCourse = async (e) => {
     e.preventDefault();
-    setError('');
-    setSuccessMsg('');
 
     if (!newTitle || !newCode || !newDesc) {
-      setError('Please fill in all course details');
+      toast.error('Please fill in all course details');
       return;
     }
 
@@ -164,7 +161,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
         throw new Error(data.message || 'Failed to create course');
       }
 
-      setSuccessMsg(`Course ${data.data.code} created successfully!`);
+      toast.success(`Course ${data.data.code} created successfully!`);
       setNewTitle('');
       setNewCode('');
       setNewDesc('');
@@ -173,15 +170,13 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       // Refresh course list
       fetchCourses();
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setFormLoading(false);
     }
   };
 
   const handleEnroll = async (courseId, courseName) => {
-    setError('');
-    setSuccessMsg('');
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses/${courseId}/enroll`, {
         method: 'POST',
@@ -195,7 +190,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
         throw new Error(data.message || 'Enrollment failed');
       }
 
-      setSuccessMsg(data.message || 'Enrolled successfully!');
+      toast.success(data.message || 'Enrolled successfully!');
       fetchCourses();
 
       // Open the diagnostic test immediately after enrollment
@@ -203,7 +198,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       setDiagnosticCourseName(courseName);
       setShowDiagnostic(true);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -239,7 +234,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
           .catch(() => {});
       }
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setDetailsLoading(false);
     }
@@ -268,11 +263,9 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const handleCreateAssignment = async (e, courseId) => {
     e.preventDefault();
-    setError('');
-    setSuccessMsg('');
 
     if (!assignTitle || !assignDesc || !assignDueDate || !assignMaxPoints) {
-      setError('Please fill in all assignment fields');
+      toast.error('Please fill in all assignment fields');
       return;
     }
 
@@ -299,7 +292,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
         throw new Error(data.message || 'Failed to create assignment');
       }
 
-      setSuccessMsg('Assignment created successfully!');
+      toast.success('Assignment created successfully!');
       setAssignTitle('');
       setAssignDesc('');
       setAssignDueDate('');
@@ -309,7 +302,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       // Refresh assignments
       fetchCourseAssignments(courseId);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setAssignFormLoading(false);
     }
@@ -320,8 +313,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
     setGradingSubmissionId(null);
     setGradeScore('');
     setGradeFeedback('');
-    setError('');
-    setSuccessMsg('');
 
     if (isStudent) {
       setSubmissionLoading(true);
@@ -364,11 +355,9 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const handleSubmitAssignment = async (e, assignmentId) => {
     e.preventDefault();
-    setError('');
-    setSuccessMsg('');
 
     if (!submissionContent) {
-      setError('Please enter your submission text or repository link');
+      toast.error('Please enter your submission text or repository link');
       return;
     }
 
@@ -391,14 +380,14 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
         throw new Error(data.message || 'Failed to submit coursework');
       }
 
-      setSuccessMsg('Assignment response submitted successfully!');
+      toast.success('Assignment response submitted successfully!');
       setSubmissionContent('');
       
       // Reload submission status
       const updatedAssign = { ...selectedAssignment };
       handleSelectAssignment(updatedAssign);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setSubmitFormLoading(false);
     }
@@ -406,11 +395,9 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const handleGradeSubmission = async (e, submissionId) => {
     e.preventDefault();
-    setError('');
-    setSuccessMsg('');
 
     if (gradeScore === '') {
-      setError('Please provide a grade score');
+      toast.error('Please provide a grade score');
       return;
     }
 
@@ -434,7 +421,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
         throw new Error(data.message || 'Failed to grade submission');
       }
 
-      setSuccessMsg('Graded and performance records updated successfully!');
+      toast.success('Graded and performance records updated successfully!');
       setGradeScore('');
       setGradeFeedback('');
       setGradingSubmissionId(null);
@@ -443,7 +430,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       const updatedAssign = { ...selectedAssignment };
       handleSelectAssignment(updatedAssign);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setGradeFormLoading(false);
     }
@@ -487,11 +474,9 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const handleCreateMaterial = async (e, courseId) => {
     e.preventDefault();
-    setError('');
-    setSuccessMsg('');
 
     if (!matTitle || !matDesc || !matContentType) {
-      setError('Please fill in material title, description, and type');
+      toast.error('Please fill in material title, description, and type');
       return;
     }
 
@@ -518,7 +503,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to create material');
 
-      setSuccessMsg('Material created successfully!');
+      toast.success('Material created successfully!');
       setMatTitle('');
       setMatDesc('');
       setMatContentType('text');
@@ -529,7 +514,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       
       fetchCourseMaterials(courseId, matFilter);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setMaterialFormLoading(false);
     }
@@ -537,8 +522,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const handleDeleteMaterial = async (materialId, courseId) => {
     if (!window.confirm('Are you sure you want to delete this material?')) return;
-    setError('');
-    setSuccessMsg('');
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/materials/${materialId}`, {
         method: 'DELETE',
@@ -547,10 +530,10 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to delete material');
 
-      setSuccessMsg('Material deleted successfully');
+      toast.success('Material deleted successfully');
       fetchCourseMaterials(courseId, matFilter);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     }
   };
 
@@ -578,8 +561,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const handleSelectQuiz = async (quiz) => {
     setSelectedQuiz(quiz);
     setQuizAnswers({});
-    setError('');
-    setSuccessMsg('');
 
     if (isStudent) {
       setMyQuizAttemptLoading(true);
@@ -622,17 +603,15 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const handleCreateQuiz = async (e, courseId) => {
     e.preventDefault();
-    setError('');
-    setSuccessMsg('');
 
     if (!quizTitle || quizQuestions.length === 0) {
-      setError('Please fill in quiz title and add at least one question');
+      toast.error('Please fill in quiz title and add at least one question');
       return;
     }
 
     for (const q of quizQuestions) {
       if (!q.questionText || q.options.some(o => !o.trim())) {
-        setError('Please make sure all questions and options are filled out');
+        toast.error('Please make sure all questions and options are filled out');
         return;
       }
     }
@@ -660,7 +639,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
         throw new Error(data.message || 'Failed to create quiz');
       }
 
-      setSuccessMsg('Quiz created successfully!');
+      toast.success('Quiz created successfully!');
       setQuizTitle('');
       setQuizDesc('');
       setQuizTimeLimit(0);
@@ -669,7 +648,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       
       fetchCourseQuizzes(courseId);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setQuizFormLoading(false);
     }
@@ -677,13 +656,11 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const handleSubmitQuiz = async (e, quizId) => {
     e.preventDefault();
-    setError('');
-    setSuccessMsg('');
 
     const answersArray = [];
     for (let i = 0; i < selectedQuiz.questions.length; i++) {
       if (quizAnswers[i] === undefined) {
-        setError('Please answer all questions before submitting');
+        toast.error('Please answer all questions before submitting');
         return;
       }
       answersArray.push(Number(quizAnswers[i]));
@@ -708,7 +685,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
         throw new Error(data.message || 'Failed to submit quiz');
       }
 
-      setSuccessMsg('Quiz submitted and auto-graded successfully!');
+      toast.success('Quiz submitted and auto-graded successfully!');
 
       // ADAPTIVE ENGINE: Handle level update notification
       if (data.data?.levelUpdate) {
@@ -719,7 +696,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
            ['Beginner', 'Intermediate', 'Advanced'].indexOf(previousLevel))
           ? 'levelled up' : previousLevel ? 'updated' : 'set';
 
-        setSuccessMsg(
+        toast.success(
           `Quiz graded! ${emoji} Your learning level has been ${direction} to ${newLevel} ` +
           `(quiz average: ${rollingAverage}%). Your materials have been refreshed!`
         );
@@ -732,7 +709,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       const updatedQuiz = { ...selectedQuiz };
       handleSelectQuiz(updatedQuiz);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setQuizSubmitting(false);
     }
@@ -822,16 +799,14 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
   const handleCreateDiagTest = async (e, courseId) => {
     e.preventDefault();
-    setError('');
-    setSuccessMsg('');
 
     if (!diagTitle || diagQuestions.length === 0) {
-      setError('Please add a title and at least one question');
+      toast.error('Please add a title and at least one question');
       return;
     }
     for (const q of diagQuestions) {
       if (!q.questionText.trim() || q.options.some(o => !o.trim())) {
-        setError('Please fill in all question texts and options');
+        toast.error('Please fill in all question texts and options');
         return;
       }
     }
@@ -846,11 +821,11 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to save diagnostic test');
 
-      setSuccessMsg('Diagnostic test saved successfully! Students will now be prompted to take it upon enrollment.');
+      toast.success('Diagnostic test saved successfully! Students will now be prompted to take it upon enrollment.');
       setShowDiagCreateForm(false);
       setExistingDiagTest(data.data);
     } catch (err) {
-      setError(err.message);
+      toast.error(err.message);
     } finally {
       setDiagFormLoading(false);
     }
@@ -925,21 +900,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
           </button>
         </div>
       </header>
-
-      {/* ALERT MESSAGES */}
-      {error && (
-        <div className="alert alert-error fade-in">
-          <span><AlertCircle size={18} /></span>
-          <span>{error}</span>
-        </div>
-      )}
-      
-      {successMsg && (
-        <div className="alert alert-success fade-in">
-          <span><CheckCircle size={18} /></span>
-          <span>{successMsg}</span>
-        </div>
-      )}
 
       {/* DASHBOARD GRID CONTENT */}
       {loading ? (
@@ -1168,7 +1128,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                 setMyLevel(level);
                 setShowDiagnostic(false);
                 setDiagnosticCourseId(null);
-                setSuccessMsg(`Diagnostic complete! You are classified as ${level}. Your materials have been personalised.`);
+                toast.success(`Diagnostic complete! You are classified as ${level}. Your materials have been personalised.`);
               }}
               onSkip={() => {
                 setShowDiagnostic(false);
@@ -2340,6 +2300,9 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
           </div>
         </div>
       )}
+
+      {/* TOAST NOTIFICATIONS */}
+      <ToastContainer toasts={toasts} onRemove={removeToast} />
     </div>
   );
 };

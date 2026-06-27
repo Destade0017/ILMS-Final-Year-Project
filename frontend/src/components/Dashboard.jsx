@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import CourseDetailsModal from './CourseDetailsModal';
 import { LogOut, AlertCircle, CheckCircle, FileText, ClipboardList, BookOpen, Users, LayoutDashboard, Settings } from 'lucide-react';
 
 const Dashboard = ({ token, user, logout, goToProfile }) => {
@@ -85,11 +86,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [matDifficulty, setMatDifficulty] = useState('medium');
   const [matFilter, setMatFilter] = useState('all');
 
-  // Load courses on component mount
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-
   const fetchCourses = async () => {
     setLoading(true);
     setError('');
@@ -110,6 +106,11 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       setLoading(false);
     }
   };
+
+  // Load courses on component mount
+  useEffect(() => {
+    fetchCourses();
+  }, []);
 
   const handleCreateCourse = async (e) => {
     e.preventDefault();

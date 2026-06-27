@@ -83,7 +83,8 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [matFileUrl, setMatFileUrl] = useState('');
   const [matBodyText, setMatBodyText] = useState('');
   const [matDifficulty, setMatDifficulty] = useState('medium');
-  const [matFilter, setMatFilter] = useState('all');
+  const [matFilter, setMatFilter] = useState('adaptive');
+  const [adaptiveStats, setAdaptiveStats] = useState(null);
 
   // Load courses on component mount
   useEffect(() => {
@@ -428,8 +429,9 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   };
 
   // MATERIALS HELPERS
-  const fetchCourseMaterials = async (courseId, difficulty = 'all') => {
+  const fetchCourseMaterials = async (courseId, difficulty = 'adaptive') => {
     setMaterialsLoading(true);
+    setAdaptiveStats(null);
     try {
       const url = new URL(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/materials/course/${courseId}`);
       if (difficulty !== 'all') {
@@ -441,6 +443,9 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.message || 'Failed to fetch materials');
       setMaterials(data.data);
+      if (data.adaptiveStats) {
+        setAdaptiveStats(data.adaptiveStats);
+      }
     } catch (err) {
       console.error('Error fetching materials:', err.message);
     } finally {
@@ -1773,6 +1778,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                       className="form-input"
                       style={{ padding: '4px 10px', fontSize: '0.9rem', width: 'auto' }}
                     >
+                      <option value="adaptive">Adaptive (Recommended)</option>
                       <option value="all">All Difficulties</option>
                       <option value="easy">Easy</option>
                       <option value="medium">Medium</option>
@@ -1788,6 +1794,20 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                     </button>
                   )}
                 </div>
+
+                {adaptiveStats && (
+                  <div className="fade-in" style={{ padding: '16px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: 'var(--radius)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{ fontSize: '1.8rem' }}>🧠</div>
+                    <div>
+                      <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem' }}>Adaptive Learning Engine Active</h4>
+                      {adaptiveStats.assessmentCount > 0 ? (
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Based on your current course average of <strong style={{color: 'var(--primary)'}}>{adaptiveStats.averageScore}%</strong>, we have unlocked <strong>{adaptiveStats.recommendedLevel}</strong> materials for you.</p>
+                      ) : (
+                        <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Take a quiz or complete an assignment to unlock personalized content! Starting you off with <strong>{adaptiveStats.recommendedLevel}</strong> materials.</p>
+                      )}
+                    </div>
+                  </div>
+                )}
 
                 {isLecturer && showCreateMaterialForm && (
                   <form onSubmit={(e) => handleCreateMaterial(e, selectedCourse._id)} className="card" style={{ padding: '24px', marginBottom: '30px', background: 'rgba(0,0,0,0.02)' }}>

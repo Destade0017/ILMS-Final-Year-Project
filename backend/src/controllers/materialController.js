@@ -1,5 +1,6 @@
 import Material from '../models/Material.js';
 import Course from '../models/Course.js';
+import AssessmentResult from '../models/AssessmentResult.js';
 
 /**
  * @desc    Create a new course learning material
@@ -98,26 +99,72 @@ export const getCourseMaterials = async (req, res) => {
             });
         }
 
-        // 3. Build query filter
+        // 3. Build query filter and handle ADAPTIVE ENGINE
         const query = { courseId };
+        let adaptiveStats = null;
+
         if (difficulty) {
-            if (!['easy', 'medium', 'hard'].includes(difficulty.toLowerCase())) {
+            const requestedDiff = difficulty.toLowerCase();
+            
+            if (requestedDiff === 'adaptive') {
+                // Adaptive Engine Logic
+                // a. Only run for students (lecturers/admins seeing 'adaptive' should just see all, or we calculate for a specific student if passed, but typically this is student-facing)
+                if (isStudent) {
+                    // b. Fetch all assessment results for this student in this course
+                    const results = await AssessmentResult.find({ 
+                        studentId: req.user._id, 
+                        courseId: courseId 
+                    });
+
+                    let avgScore = 0;
+                    let recommendedLevel = 'easy'; // Default if no scores
+
+                    if (results.length > 0) {
+                        const totalScore = results.reduce((sum, res) => sum + res.score, 0);
+                        avgScore = totalScore / results.length;
+
+                        // c. Threshold Algorithm
+                        if (avgScore < 50) {
+                            recommendedLevel = 'easy';
+                        } else if (avgScore >= 50 && avgScore < 80) {
+                            recommendedLevel = 'medium';
+                        } else {
+                            recommendedLevel = 'hard';
+                        }
+                    }
+
+                    query.difficultyLevel = recommendedLevel;
+                    adaptiveStats = {
+                        isAdaptive: true,
+                        averageScore: Number(avgScore.toFixed(1)),
+                        recommendedLevel,
+                        assessmentCount: results.length
+                    };
+                }
+            } else if (['easy', 'medium', 'hard'].includes(requestedDiff)) {
+                query.difficultyLevel = requestedDiff;
+            } else if (requestedDiff !== 'all') {
                 return res.status(400).json({
                     success: false,
-                    message: 'Invalid difficulty filter. Must be easy, medium, or hard',
+                    message: 'Invalid difficulty filter. Must be all, adaptive, easy, medium, or hard',
                 });
             }
-            query.difficultyLevel = difficulty.toLowerCase();
         }
 
         // 4. Fetch materials
         const materials = await Material.find(query).sort({ createdAt: -1 });
 
-        res.status(200).json({
+        const responsePayload = {
             success: true,
             count: materials.length,
             data: materials,
-        });
+        };
+
+        if (adaptiveStats) {
+            responsePayload.adaptiveStats = adaptiveStats;
+        }
+
+        res.status(200).json(responsePayload);
     } catch (error) {
         console.error('Get Course Materials Error:', error);
         if (error.kind === 'ObjectId') {

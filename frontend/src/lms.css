@@ -1,0 +1,114 @@
+/* Add these at the bottom of index.css */
+
+/* LMS Hero Banner */
+.lms-hero {
+  background: linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%);
+  color: white;
+  padding: 40px;
+  border-radius: var(--radius) var(--radius) 0 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.lms-hero::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: url('data:image/svg+xml;utf8,<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><circle cx="50" cy="50" r="40" stroke="rgba(255,255,255,0.1)" stroke-width="2" fill="none"/></svg>') repeat;
+  opacity: 0.3;
+  pointer-events: none;
+}
+
+.lms-hero h2 {
+  color: white;
+  font-size: 2rem;
+  margin-bottom: 0.5rem;
+}
+
+/* Modern Sticky Tabs */
+.lms-tabs {
+  display: flex;
+  background: white;
+  border-bottom: 1px solid var(--border-color);
+  padding: 0 40px;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.lms-tab {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.95rem;
+  padding: 16px 20px;
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lms-tab:hover {
+  color: var(--text-primary);
+}
+
+.lms-tab.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+  font-weight: 600;
+}
+
+/* LMS Layout */
+.lms-content {
+  padding: 40px;
+  background: var(--bg-primary);
+  min-height: 50vh;
+}
+
+.lms-grid-2 {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 30px;
+}
+
+/* Module Cards */
+.module-card {
+  background: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition);
+}
+
+.module-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: #d1d5db;
+}
+
+.module-header {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: #f8fafc;
+}
+
+.module-body {
+  padding: 20px;
+}
+
+@media (max-width: 768px) {
+  .lms-hero { padding: 20px; }
+  .lms-tabs { padding: 0 10px; overflow-x: auto; }
+  .lms-content { padding: 20px; }
+  .lms-grid-2 { grid-template-columns: 1fr; }
+}

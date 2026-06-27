@@ -4,7 +4,7 @@ import AdminAnalytics from './AdminAnalytics';
 import AdminUserManagement from './AdminUserManagement';
 import AdminCourseManagement from './AdminCourseManagement';
 
-const AdminDashboard = ({ token, user, logout }) => {
+const AdminDashboard = ({ token, user, logout, goToProfile }) => {
   const [activeTab, setActiveTab] = useState('analytics'); // 'analytics', 'users', 'courses'
 
   return (
@@ -18,9 +18,14 @@ const AdminDashboard = ({ token, user, logout }) => {
             <span className={`badge badge-${user.role}`}>{user.role}</span>
           </div>
         </div>
-        <button className="btn btn-secondary" onClick={logout}>
-          <LogOut size={16} /> Logout
-        </button>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn btn-secondary" onClick={goToProfile}>
+            <Settings size={16} /> Profile
+          </button>
+          <button className="btn btn-secondary" onClick={logout}>
+            <LogOut size={16} /> Logout
+          </button>
+        </div>
       </header>
 
       {/* NAVIGATION TABS */}

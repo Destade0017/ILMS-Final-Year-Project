@@ -1,4 +1,18 @@
-import React, { useState, useEffect } from 'react';
+const fs = require('fs');
+const path = require('path');
+
+const oldDashboard = fs.readFileSync(path.join(__dirname, 'old_dashboard.jsx'), 'utf8');
+const modalStartIndex = oldDashboard.indexOf("{/* TAB CONTENT 4: QUIZZES */}");
+const modalEndIndex = oldDashboard.indexOf("{/* END MODAL OVERLAY */}");
+
+let quizLogic = "";
+if (modalStartIndex !== -1 && modalEndIndex !== -1) {
+    quizLogic = oldDashboard.substring(modalStartIndex, modalEndIndex);
+    quizLogic = quizLogic.replace(/style={{ borderBottom: '1px solid var\(--border-color\)', paddingBottom: '20px', marginBottom: '20px' }}/g, 'className="enterprise-card" style={{ padding: "24px", marginBottom: "20px" }}');
+    quizLogic = quizLogic.replace(/style={{ border: '1px solid var\(--border-color\)', padding: '15px', borderRadius: '6px', marginBottom: '15px' }}/g, 'className="enterprise-card" style={{ padding: "20px", marginBottom: "15px" }}');
+}
+
+const newModalContent = `import React, { useState, useEffect } from 'react';
 import { 
     FileText, ClipboardList, BookOpen, X, Users, Mail, Info, Calendar, 
     Video, File, PlusCircle, CheckCircle, Bell, ChevronDown, ChevronUp, 
@@ -45,7 +59,7 @@ const CourseDetailsModal = (props) => {
     }, []);
 
     // Derived Mock Data for MVP Enterprise feel
-    const heroImage = `url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2000&auto=format&fit=crop')`;
+    const heroImage = \`url('https://images.unsplash.com/photo-1516321318423-f06f85e504b3?q=80&w=2000&auto=format&fit=crop')\`;
     const progressPercent = isStudent ? 45 : 100;
     
     const mockAnnouncements = [
@@ -133,19 +147,19 @@ const CourseDetailsModal = (props) => {
 
               {/* 2. NAVIGATION TABS */}
               <div className="enterprise-tabs">
-                <button onClick={() => { setActiveTab('details'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={`enterprise-tab ${activeTab === 'details' ? 'active' : ''}`}>
+                <button onClick={() => { setActiveTab('details'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={\`enterprise-tab \${activeTab === 'details' ? 'active' : ''}\`}>
                   Overview
                 </button>
-                <button onClick={() => { setActiveTab('materials'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={`enterprise-tab ${activeTab === 'materials' ? 'active' : ''}`}>
+                <button onClick={() => { setActiveTab('materials'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={\`enterprise-tab \${activeTab === 'materials' ? 'active' : ''}\`}>
                   Modules
                 </button>
-                <button onClick={() => { setActiveTab('assignments'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={`enterprise-tab ${activeTab === 'assignments' ? 'active' : ''}`}>
+                <button onClick={() => { setActiveTab('assignments'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={\`enterprise-tab \${activeTab === 'assignments' ? 'active' : ''}\`}>
                   Assignments
                 </button>
-                <button onClick={() => { setActiveTab('quizzes'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={`enterprise-tab ${activeTab === 'quizzes' ? 'active' : ''}`}>
+                <button onClick={() => { setActiveTab('quizzes'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={\`enterprise-tab \${activeTab === 'quizzes' ? 'active' : ''}\`}>
                   Quizzes
                 </button>
-                <button onClick={() => { setActiveTab('announcements'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={`enterprise-tab ${activeTab === 'announcements' ? 'active' : ''}`}>
+                <button onClick={() => { setActiveTab('announcements'); setSelectedAssignment(null); setSelectedQuiz(null); }} className={\`enterprise-tab \${activeTab === 'announcements' ? 'active' : ''}\`}>
                   Announcements
                 </button>
               </div>
@@ -498,8 +512,8 @@ const CourseDetailsModal = (props) => {
                                                     <h4 style={{ margin: '0 0 4px 0' }}>{sub.student.name}</h4>
                                                     <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>Submitted: {formatDate(sub.submittedAt)}</div>
                                                     </div>
-                                                    <span className={`enterprise-badge ${sub.status === 'graded' ? 'enterprise-badge-outline' : ''}`} style={{ background: sub.status === 'graded' ? 'var(--success-bg)' : '#fef3c7', color: sub.status === 'graded' ? 'var(--success-text)' : '#d97706' }}>
-                                                    {sub.status === 'graded' ? `Graded: ${sub.gradeScore}/${selectedAssignment.maxPoints}` : 'Needs Grading'}
+                                                    <span className={\`enterprise-badge \${sub.status === 'graded' ? 'enterprise-badge-outline' : ''}\`} style={{ background: sub.status === 'graded' ? 'var(--success-bg)' : '#fef3c7', color: sub.status === 'graded' ? 'var(--success-text)' : '#d97706' }}>
+                                                    {sub.status === 'graded' ? \`Graded: \${sub.gradeScore}/\${selectedAssignment.maxPoints}\` : 'Needs Grading'}
                                                     </span>
                                                 </div>
                                                 <div style={{ padding: '16px', background: 'var(--enterprise-gray-50)', borderRadius: '6px', marginBottom: '16px', fontSize: '0.95rem', whiteSpace: 'pre-wrap' }}>{sub.content}</div>
@@ -629,7 +643,7 @@ const CourseDetailsModal = (props) => {
                           )}
                         </div>
                         {/* Injecting original quizLogic block which we string replaced */}
-                        
+                        ${quizLogic}
                     </div>
                 )}
 
@@ -686,3 +700,7 @@ const CourseDetailsModal = (props) => {
 };
 
 export default CourseDetailsModal;
+`;
+
+fs.writeFileSync(path.join(__dirname, 'frontend/src/components/CourseDetailsModal.jsx'), newModalContent, 'utf8');
+console.log('Successfully wrote Enterprise CourseDetailsModal.jsx');

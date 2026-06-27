@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import CourseDetailsModal from './CourseDetailsModal';
 import { LogOut, AlertCircle, CheckCircle, FileText, ClipboardList, BookOpen, Users, LayoutDashboard, Settings } from 'lucide-react';
 
 const Dashboard = ({ token, user, logout, goToProfile }) => {
@@ -86,6 +85,11 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [matDifficulty, setMatDifficulty] = useState('medium');
   const [matFilter, setMatFilter] = useState('all');
 
+  // Load courses on component mount
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
   const fetchCourses = async () => {
     setLoading(true);
     setError('');
@@ -106,11 +110,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       setLoading(false);
     }
   };
-
-  // Load courses on component mount
-  useEffect(() => {
-    fetchCourses();
-  }, []);
 
   const handleCreateCourse = async (e) => {
     e.preventDefault();
@@ -745,35 +744,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
     ? courses.filter(c => c.lecturer._id === user.id || c.lecturer === user.id)
     : [];
 
-
-  const modalProps = {
-    user, token, isLecturer, isStudent,
-    selectedCourse, setSelectedCourse,
-    activeTab, setActiveTab,
-    selectedAssignment, setSelectedAssignment,
-    assignments, assignmentsLoading,
-    showCreateAssignForm, setShowCreateAssignForm,
-    assignTitle, setAssignTitle, assignDesc, setAssignDesc,
-    assignDueDate, setAssignDueDate, assignMaxPoints, setAssignMaxPoints,
-    handleCreateAssignment, assignFormLoading, handleSelectAssignment,
-    submissionLoading, studentSubmission, submissionContent, setSubmissionContent,
-    handleSubmitAssignment, submitFormLoading, submissionsLoading, submissions,
-    gradingSubmissionId, setGradingSubmissionId, gradeScore, setGradeScore,
-    gradeFeedback, setGradeFeedback, handleGradeSubmission, gradeFormLoading,
-    selectedQuiz, setSelectedQuiz, quizzesLoading, quizzes,
-    showCreateQuizForm, setShowCreateQuizForm, quizTitle, setQuizTitle,
-    quizDesc, setQuizDesc, quizTimeLimit, setQuizTimeLimit, quizQuestions,
-    handleAddQuestion, handleRemoveQuestion, handleQuestionTextChange,
-    handleOptionChange, handleAddOption, handleRemoveOption, handleCorrectAnswerIndexChange,
-    quizFormLoading, handleCreateQuiz, handleSelectQuiz, myQuizAttemptLoading,
-    myQuizAttempt, quizSubmitting, quizAnswers, setQuizAnswers, handleSubmitQuiz,
-    quizAttemptsLoading, quizAttempts, matFilter, setMatFilter, fetchCourseMaterials,
-    materialsLoading, materials, showCreateMaterialForm, setShowCreateMaterialForm,
-    matTitle, setMatTitle, matDesc, setMatDesc, matContentType, setMatContentType,
-    matFileUrl, setMatFileUrl, matBodyText, setMatBodyText, matDifficulty, setMatDifficulty,
-    materialFormLoading, handleCreateMaterial, handleDeleteMaterial, formatDate
-  };
-    
   return (
     <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px 20px' }} className="fade-in">
       {/* HEADER SECTION */}
@@ -1015,10 +985,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
         </div>
       )}
 
-      
-      {/* MODAL EXTRACTED TO CourseDetailsModal.jsx */}
-      {selectedCourse && <CourseDetailsModal {...modalProps} />}
-
+      {/* SELECTED COURSE DETAILS PANEL / MODAL */}
       {selectedCourse && (
         <div className="modal-overlay">
           <div className="modal-content fade-in">

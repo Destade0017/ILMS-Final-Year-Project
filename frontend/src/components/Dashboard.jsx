@@ -83,7 +83,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [matContentType, setMatContentType] = useState('text');
   const [matFileUrl, setMatFileUrl] = useState('');
   const [matBodyText, setMatBodyText] = useState('');
-  const [matDifficulty, setMatDifficulty] = useState('medium');
+  const [matDifficulty, setMatDifficulty] = useState('Beginner');
   const [matFilter, setMatFilter] = useState('adaptive');
   const [adaptiveStats, setAdaptiveStats] = useState(null);
 
@@ -524,7 +524,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       setMatContentType('text');
       setMatFileUrl('');
       setMatBodyText('');
-      setMatDifficulty('medium');
+      setMatDifficulty('Beginner');
       setShowCreateMaterialForm(false);
       
       fetchCourseMaterials(courseId, matFilter);
@@ -1963,11 +1963,11 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                       className="form-input"
                       style={{ padding: '4px 10px', fontSize: '0.9rem', width: 'auto' }}
                     >
-                      <option value="adaptive">Adaptive (Recommended)</option>
-                      <option value="all">All Difficulties</option>
-                      <option value="easy">Easy</option>
-                      <option value="medium">Medium</option>
-                      <option value="hard">Hard</option>
+                      <option value="adaptive">🧠 Adaptive (Recommended)</option>
+                      <option value="all">All Levels</option>
+                      <option value="Beginner">🌱 Beginner</option>
+                      <option value="Intermediate">🔥 Intermediate</option>
+                      <option value="Advanced">🚀 Advanced</option>
                     </select>
                   </div>
                   {isLecturer && (
@@ -2027,9 +2027,10 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                       <div className="form-group">
                         <label>Difficulty</label>
                         <select className="form-input" value={matDifficulty} onChange={e => setMatDifficulty(e.target.value)}>
-                          <option value="easy">Easy</option>
-                          <option value="medium">Medium</option>
-                          <option value="hard">Hard</option>
+                          <option value="Beginner">🌱 Beginner</option>
+                          <option value="Intermediate">🔥 Intermediate</option>
+                          <option value="Advanced">🚀 Advanced</option>
+                          <option value="All">📌 All Levels (Everyone sees this)</option>
                         </select>
                       </div>
                     </div>
@@ -2080,8 +2081,15 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                     {materials.map(mat => (
                       <div key={mat._id} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                          <span className={`badge ${mat.difficultyLevel === 'easy' ? 'badge-student' : mat.difficultyLevel === 'hard' ? 'badge-admin' : 'badge-lecturer'}`}>
-                            {mat.difficultyLevel.toUpperCase()}
+                          <span style={{
+                            padding: '3px 10px',
+                            borderRadius: '12px',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            background: mat.difficultyLevel === 'Advanced' ? '#fce4ec' : mat.difficultyLevel === 'Intermediate' ? '#fff8e1' : mat.difficultyLevel === 'All' ? '#e3f2fd' : '#e8f5e9',
+                            color: mat.difficultyLevel === 'Advanced' ? '#c62828' : mat.difficultyLevel === 'Intermediate' ? '#f57f17' : mat.difficultyLevel === 'All' ? '#1565c0' : '#2e7d32',
+                          }}>
+                            {mat.difficultyLevel === 'Beginner' ? '🌱 Beginner' : mat.difficultyLevel === 'Intermediate' ? '🔥 Intermediate' : mat.difficultyLevel === 'Advanced' ? '🚀 Advanced' : '📌 All Levels'}
                           </span>
                           <span style={{ fontSize: '1.2rem' }}>
                             {mat.contentType === 'pdf' ? 'PDF' : mat.contentType === 'video' ? 'Video' : 'Article'}

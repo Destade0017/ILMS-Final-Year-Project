@@ -54,7 +54,7 @@ function App() {
   if (appLoading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', color: 'var(--text-secondary)' }}>
-        Initializing ILMS application...
+        Initializing Learnova application...
       </div>
     );
   }

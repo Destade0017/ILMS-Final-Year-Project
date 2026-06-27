@@ -47,7 +47,7 @@ const run = async () => {
         const a1 = await Assignment.create({
             courseId: csc405._id,
             title: 'Lab 1: Software Requirements Specification (SRS)',
-            description: 'Write a comprehensive SRS document for the ILMS project. Follow the IEEE 830 standard. Submit as a github repository link or a text summary of your functional and non-functional requirements.',
+            description: 'Write a comprehensive SRS document for the Learnova project. Follow the IEEE 830 standard. Submit as a github repository link or a text summary of your functional and non-functional requirements.',
             dueDate: new Date(Date.now() - 24 * 60 * 60 * 1000 * 2), // Due 2 days ago
             maxPoints: 100,
         });

@@ -749,7 +749,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       {/* HEADER SECTION */}
       <header className="card mobile-stack" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', marginBottom: '30px' }}>
         <div>
-          <h1 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>ILMS Dashboard</h1>
+          <h1 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>Learnova Dashboard</h1>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Welcome, {user.name}</span>
             <span className={`badge badge-${user.role}`}>{user.role}</span>

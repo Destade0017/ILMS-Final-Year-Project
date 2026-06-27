@@ -61,7 +61,7 @@ const Login = ({ setAuth, toggleView, forgotView }) => {
       <div className="auth-card card fade-in">
         <div className="auth-header">
           <h2>Welcome Back</h2>
-          <p>Login to your ILMS account</p>
+          <p>Login to your Learnova account</p>
         </div>
 
         {error && (

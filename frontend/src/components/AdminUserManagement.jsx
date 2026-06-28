@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { LogOut, AlertCircle, CheckCircle, FileText, ClipboardList, BookOpen, Users, LayoutDashboard, Settings } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 
 const AdminUserManagement = ({ token, user: currentUser }) => {
   const [users, setUsers] = useState([]);
@@ -18,10 +18,6 @@ const AdminUserManagement = ({ token, user: currentUser }) => {
   const [role, setRole] = useState('student');
   const [formLoading, setFormLoading] = useState(false);
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
   const fetchUsers = async () => {
     setLoading(true);
     setError('');
@@ -38,6 +34,12 @@ const AdminUserManagement = ({ token, user: currentUser }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const handleOpenCreateForm = () => {
     setIsEditing(false);

@@ -1,4 +1,5 @@
-import React, { useEffect, useRef } from 'react';
+/* eslint-disable react-refresh/only-export-components */
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { CheckCircle, XCircle, AlertTriangle, Info, X } from 'lucide-react';
 
 /**
@@ -101,18 +102,18 @@ export const ToastContainer = ({ toasts, onRemove }) => {
  *   toast.info('3 students enrolled today');
  */
 export const useToast = () => {
-  const [toasts, setToasts] = React.useState([]);
+  const [toasts, setToasts] = useState([]);
 
-  const addToast = React.useCallback((type, message, duration) => {
+  const addToast = useCallback((type, message, duration) => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`;
     setToasts(prev => [...prev, { id, type, message, duration }]);
   }, []);
 
-  const removeToast = React.useCallback((id) => {
+  const removeToast = useCallback((id) => {
     setToasts(prev => prev.filter(t => t.id !== id));
   }, []);
 
-  const toast = React.useMemo(() => ({
+  const toast = useMemo(() => ({
     success: (msg, dur) => addToast('success', msg, dur),
     error:   (msg, dur) => addToast('error',   msg, dur),
     warning: (msg, dur) => addToast('warning', msg, dur),

@@ -1,8 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { LogOut, AlertCircle, CheckCircle, FileText, ClipboardList, BookOpen, Users, LayoutDashboard, Settings } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { LogOut, FileText, ClipboardList, BookOpen, Settings, ArrowLeft, Info, Award, Clock, User, Trophy, GraduationCap } from 'lucide-react';
 import DiagnosticTest from './DiagnosticTest.jsx';
 import { ToastContainer, useToast } from './Toast.jsx';
 import { SkeletonDashboard, SkeletonList, SkeletonMaterialGrid } from './Skeleton.jsx';
+
+const getInitials = (name = '') =>
+  name.split(' ').slice(0, 2).map((w) => w[0]).join('').toUpperCase();
+
+const getGreeting = () => {
+  const h = new Date().getHours();
+  if (h < 12) return 'Good morning';
+  if (h < 17) return 'Good afternoon';
+  return 'Good evening';
+};
 
 const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [courses, setCourses] = useState([]);
@@ -15,11 +25,9 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [newDesc, setNewDesc] = useState('');
   const [formLoading, setFormLoading] = useState(false);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [deleteCourseLoading, setDeleteCourseLoading] = useState(false);
-
   // Selected course details modal/drawer state
   const [selectedCourse, setSelectedCourse] = useState(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
+
 
   // Tab control inside Selected Course Modal
   const [activeTab, setActiveTab] = useState('details'); // 'details' or 'assignments'
@@ -108,11 +116,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   const [diagClassResults, setDiagClassResults] = useState(null);
   const [diagClassLoading, setDiagClassLoading] = useState(false);
 
-  // Load courses on component mount
-  useEffect(() => {
-    fetchCourses();
-  }, []);
-
   const fetchCourses = async () => {
     setLoading(true);
     try {
@@ -132,6 +135,13 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       setLoading(false);
     }
   };
+
+  // Load courses on component mount
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchCourses();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const handleCreateCourse = async (e) => {
     e.preventDefault();
@@ -178,43 +188,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
     }
   };
 
-  const handleDeleteCourse = async (courseId) => {
-    if (!window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone and will delete all associated materials, quizzes, and results.')) {
-      return;
-    }
-
-    setDeleteCourseLoading(true);
-
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses/${courseId}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.message || 'Failed to delete course');
-      }
-
-      toast.success(data.message || 'Course deleted successfully');
-      
-      // Remove from local state
-      setCourses(courses.filter(c => c._id !== courseId));
-      
-      // If we are currently viewing the deleted course, close the modal
-      if (selectedCourse && selectedCourse._id === courseId) {
-        setSelectedCourse(null);
-      }
-    } catch (err) {
-      toast.error(err.message);
-    } finally {
-      setDeleteCourseLoading(false);
-    }
-  };
-
   const handleEnroll = async (courseId, courseName) => {
     try {
       const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses/${courseId}/enroll`, {
@@ -242,7 +215,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
   };
 
   const handleViewDetails = async (courseId) => {
-    setDetailsLoading(true);
+
     setActiveTab('details');
     setSelectedAssignment(null);
     setMyLevel(null);
@@ -275,7 +248,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
     } catch (err) {
       toast.error(err.message);
     } finally {
-      setDetailsLoading(false);
+      // setDetailsLoading(false);
     }
   };
 
@@ -729,14 +702,14 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
       // ADAPTIVE ENGINE: Handle level update notification
       if (data.data?.levelUpdate) {
         const { previousLevel, newLevel, rollingAverage } = data.data.levelUpdate;
-        const emoji = newLevel === 'Advanced' ? '🚀' : newLevel === 'Intermediate' ? '🔥' : '🌱';
+        
         const direction = previousLevel &&
           (['Beginner', 'Intermediate', 'Advanced'].indexOf(newLevel) >
            ['Beginner', 'Intermediate', 'Advanced'].indexOf(previousLevel))
           ? 'levelled up' : previousLevel ? 'updated' : 'set';
 
         toast.success(
-          `Quiz graded! ${emoji} Your learning level has been ${direction} to ${newLevel} ` +
+          `Quiz graded! Your learning level has been ${direction} to ${newLevel} ` +
           `(quiz average: ${rollingAverage}%). Your materials have been refreshed!`
         );
         // Update the level badge in the materials tab immediately
@@ -920,25 +893,48 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
     : [];
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '30px 20px' }} className="fade-in">
-      {/* HEADER SECTION */}
-      <header className="card mobile-stack" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '20px', marginBottom: '30px' }}>
-        <div>
-          <h1 style={{ fontSize: '1.5rem', marginBottom: '4px' }}>Learnova Dashboard</h1>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Welcome, {user.name}</span>
-            <span className={`badge badge-${user.role}`}>{user.role}</span>
-          </div>
+    <div style={{ minHeight: '100vh', background: 'var(--bg-primary)' }}>
+
+      {/* ── TOP BAR ───────────────────────────────────────────── */}
+      <header className="app-topbar">
+        <div className="app-topbar-logo">
+          <div className="app-topbar-monogram">L</div>
+          <span className="app-topbar-name">Learnova</span>
         </div>
-        <div style={{ display: 'flex', gap: '10px' }}>
-          <button className="btn btn-secondary" onClick={goToProfile}>
-            <Settings size={16} /> Profile
+        <div className="app-topbar-divider" />
+        <span className="app-topbar-breadcrumb">
+          {user.role === 'lecturer' ? 'Lecturer Dashboard' : 'Student Dashboard'}
+        </span>
+        <div className="app-topbar-actions">
+          <div className="app-topbar-user">
+            <div className="app-topbar-avatar">{getInitials(user.name)}</div>
+            <div className="app-topbar-user-info">
+              <span className="app-topbar-user-name">{user.name}</span>
+              <span className="app-topbar-user-role">{user.role}</span>
+            </div>
+          </div>
+          <div className="app-topbar-divider" />
+          <button className="btn btn-ghost btn-sm" onClick={goToProfile} title="Profile Settings">
+            <Settings size={16} />
           </button>
-          <button className="btn btn-secondary" onClick={logout}>
-            <LogOut size={16} /> Logout
+          <button className="btn btn-secondary btn-sm" onClick={logout}>
+            <LogOut size={15} /> Logout
           </button>
         </div>
       </header>
+
+      {!selectedCourse ? (
+        <div className="page-wrapper fade-in">
+          {/* GREETING */}
+          <div className="greeting-block">
+            <div className="greeting-text">{getGreeting()}, {user.name.split(' ')[0]}</div>
+            <div className="greeting-sub">
+              {user.role === 'lecturer'
+                ? `You have ${lecturerCourses.length} course${lecturerCourses.length !== 1 ? 's' : ''} you're instructing.`
+                : `You are enrolled in ${enrolledCourses.length} course${enrolledCourses.length !== 1 ? 's' : ''}.`
+              }
+            </div>
+          </div>
 
       {/* DASHBOARD GRID CONTENT */}
       {loading ? (
@@ -950,7 +946,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
           
           {/* LECTURER VIEW: CREATE COURSE & LIST LECTURED COURSES */}
           {isLecturer && (
-            <section className="card" style={{ padding: '30px' }}>
+            <section className="card" style={{ padding: '28px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
                 <h2 style={{ fontSize: '1.3rem' }}>My Instructing Courses ({lecturerCourses.length})</h2>
                 <button 
@@ -1011,36 +1007,32 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
               {/* COURSE LIST */}
               {lecturerCourses.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                  You have not created any courses yet. Click "Create Course" to get started.
+                <div className="empty-state">
+                  <div className="empty-state-icon"><BookOpen size={22} /></div>
+                  <h3>No courses yet</h3>
+                  <p>Click &quot;Create Course&quot; above to get started.</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                <div className="grid-cards-auto">
                   {lecturerCourses.map((course) => (
-                    <div key={course._id} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '220px' }}>
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--accent)', background: 'rgba(14, 165, 233, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-                            {course.code}
-                          </span>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            {course.students.length} Enrolled
-                          </span>
-                        </div>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {course.title}
-                        </h3>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                          {course.description}
-                        </p>
+                    <div key={course._id} className="course-card">
+                      <div className="course-card-accent lecturer" />
+                      <div className="course-card-body">
+                        <span className="course-card-code">{course.code}</span>
+                        <div className="course-card-title">{course.title}</div>
+                        <p className="course-card-desc">{course.description}</p>
                       </div>
-                      <button 
-                        className="btn btn-secondary" 
-                        style={{ marginTop: '15px', width: '100%' }}
-                        onClick={() => handleViewDetails(course._id)}
-                      >
-                      View Course Details
-                      </button>
+                      <div className="course-card-footer">
+                        <span className="course-card-meta">
+                          <User size={13} /> {course.students.length} enrolled
+                        </span>
+                        <button
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => handleViewDetails(course._id)}
+                        >
+                          View Details
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -1050,39 +1042,32 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
           {/* STUDENT VIEW: ENROLLED COURSES */}
           {isStudent && (
-            <section className="card" style={{ padding: '30px' }}>
-              <h2 style={{ fontSize: '1.3rem', marginBottom: '20px' }}>My Enrolled Courses ({enrolledCourses.length})</h2>
+            <section className="card" style={{ padding: '28px' }}>
+              <div className="section-header">
+                <h2>My Enrolled Courses <span className="section-meta">({enrolledCourses.length})</span></h2>
+              </div>
               {enrolledCourses.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                  You are not enrolled in any courses yet. Scroll down to see available courses.
+                <div className="empty-state">
+                  <div className="empty-state-icon"><GraduationCap size={22} /></div>
+                  <h3>Not enrolled yet</h3>
+                  <p>Browse available courses below and enrol to get started.</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                <div className="grid-cards-auto">
                   {enrolledCourses.map((course) => (
-                    <div key={course._id} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '200px' }}>
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--accent)', background: 'rgba(14, 165, 233, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
-                            {course.code}
-                          </span>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--success)' }}>
-                            Enrolled
-                          </span>
-                        </div>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {course.title}
-                        </h3>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                          {course.description}
-                        </p>
+                    <div key={course._id} className="course-card">
+                      <div className="course-card-accent enrolled" />
+                      <div className="course-card-body">
+                        <span className="course-card-code">{course.code}</span>
+                        <div className="course-card-title">{course.title}</div>
+                        <p className="course-card-desc">{course.description}</p>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '15px' }}>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-                          Lecturer: {course.lecturer?.name || 'Assigned'}
+                      <div className="course-card-footer">
+                        <span className="course-card-meta">
+                          <User size={13} /> {course.lecturer?.name || 'Assigned'}
                         </span>
-                        <button 
-                          className="btn btn-secondary" 
-                          style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                        <button
+                          className="btn btn-secondary btn-sm"
                           onClick={() => handleViewDetails(course._id)}
                         >
                           View Details
@@ -1097,42 +1082,35 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
           {/* STUDENT VIEW: AVAILABLE COURSES FOR ENROLLMENT */}
           {isStudent && (
-            <section className="card" style={{ padding: '30px' }}>
-              <h2 style={{ fontSize: '1.3rem', marginBottom: '20px' }}>Available Courses ({availableCourses.length})</h2>
+            <section className="card" style={{ padding: '28px' }}>
+              <div className="section-header">
+                <h2>Available Courses <span className="section-meta">({availableCourses.length})</span></h2>
+              </div>
               {availableCourses.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-                  No other courses available at this time.
+                <div className="empty-state">
+                  <div className="empty-state-icon"><BookOpen size={22} /></div>
+                  <h3>No courses available</h3>
+                  <p>Check back later for new courses.</p>
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '20px' }}>
+                <div className="grid-cards-auto">
                   {availableCourses.map((course) => (
-                    <div key={course._id} className="card" style={{ padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', height: '220px' }}>
-                      <div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--text-muted)', background: 'rgba(0,0,0,0.05)', padding: '2px 8px', borderRadius: '4px' }}>
-                            {course.code}
-                          </span>
-                          <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                            {course.students.length} Enrolled
-                          </span>
-                        </div>
-                        <h3 style={{ fontSize: '1.1rem', marginBottom: '8px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {course.title}
-                        </h3>
-                        <p style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
-                          {course.description}
-                        </p>
+                    <div key={course._id} className="course-card">
+                      <div className="course-card-accent available" />
+                      <div className="course-card-body">
+                        <span className="course-card-code">{course.code}</span>
+                        <div className="course-card-title">{course.title}</div>
+                        <p className="course-card-desc">{course.description}</p>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '15px', marginTop: '15px' }}>
-                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '150px' }}>
-                          By: {course.lecturer?.name || 'Lecturer'}
+                      <div className="course-card-footer">
+                        <span className="course-card-meta">
+                          <User size={13} /> {course.lecturer?.name || 'Lecturer'}
                         </span>
-                        <button 
-                          className="btn btn-primary" 
-                          style={{ padding: '8px 16px', fontSize: '0.85rem' }}
+                        <button
+                          className="btn btn-primary btn-sm"
                           onClick={() => handleEnroll(course._id, course.title)}
                         >
-                          Enroll
+                          Enrol
                         </button>
                       </div>
                     </div>
@@ -1145,105 +1123,154 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
         </div>
       )}
 
-      {/* DIAGNOSTIC TEST OVERLAY - Shown after enrollment */}
-      {showDiagnostic && diagnosticCourseId && (
-        <div className="modal-overlay">
-          <div className="modal-content fade-in" style={{ maxWidth: '780px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>
-              <div>
-                <h2 style={{ fontSize: '1.3rem', margin: 0 }}>Placement Diagnostic</h2>
-                <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{diagnosticCourseName}</p>
+        {/* DIAGNOSTIC TEST OVERLAY - Shown after enrollment */}
+        {showDiagnostic && diagnosticCourseId && (
+          <div className="modal-overlay">
+            <div className="modal-content fade-in" style={{ maxWidth: '780px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid var(--border)', paddingBottom: '16px' }}>
+                <div>
+                  <h2 style={{ fontSize: '1.3rem', margin: 0 }}>Placement Diagnostic</h2>
+                  <p style={{ margin: '4px 0 0 0', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>{diagnosticCourseName}</p>
+                </div>
+                <button
+                  onClick={() => { setShowDiagnostic(false); setDiagnosticCourseId(null); }}
+                  style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
+                >✕</button>
               </div>
-              <button
-                onClick={() => { setShowDiagnostic(false); setDiagnosticCourseId(null); }}
-                style={{ background: 'none', border: 'none', fontSize: '1.5rem', cursor: 'pointer', color: 'var(--text-secondary)' }}
-              >✕</button>
+              <DiagnosticTest
+                token={token}
+                courseId={diagnosticCourseId}
+                courseName={diagnosticCourseName}
+                onComplete={(level) => {
+                  setMyLevel(level);
+                  setShowDiagnostic(false);
+                  setDiagnosticCourseId(null);
+                  toast.success(`Diagnostic complete! You are classified as ${level}. Your materials have been personalised.`);
+                }}
+                onSkip={() => {
+                  setShowDiagnostic(false);
+                  setDiagnosticCourseId(null);
+                }}
+              />
             </div>
-            <DiagnosticTest
-              token={token}
-              courseId={diagnosticCourseId}
-              courseName={diagnosticCourseName}
-              onComplete={(level) => {
-                setMyLevel(level);
-                setShowDiagnostic(false);
-                setDiagnosticCourseId(null);
-                toast.success(`Diagnostic complete! You are classified as ${level}. Your materials have been personalised.`);
-              }}
-              onSkip={() => {
-                setShowDiagnostic(false);
-                setDiagnosticCourseId(null);
-              }}
-            />
           </div>
-        </div>
-      )}
+        )}
 
-      {/* SELECTED COURSE DETAILS PANEL / MODAL */}
-      {selectedCourse && (
-        <div className="modal-overlay">
-          <div className="modal-content fade-in">
-            
-            {/* MODAL HEADER */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '15px' }}>
-              <div>
-                <span style={{ fontSize: '0.8rem', fontWeight: 'bold', color: 'var(--accent)', background: 'rgba(14, 165, 233, 0.1)', padding: '2px 8px', borderRadius: '4px' }}>
+      </div>
+    ) : (
+        <div className="course-hub-layout fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+          
+          {/* TOP BAR / BACK TO DASHBOARD */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <button 
+              onClick={() => { setSelectedCourse(null); setSelectedAssignment(null); setSelectedQuiz(null); }} 
+              className="btn btn-secondary" 
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', fontWeight: '600' }}
+            >
+              <ArrowLeft size={16} /> Back to Dashboard
+            </button>
+            <span className="badge badge-student" style={{ fontSize: '0.85rem', padding: '6px 12px', background: 'var(--primary-light)', color: 'var(--primary)', fontWeight: 'bold', border: '1px solid rgba(37, 99, 235, 0.2)' }}>
+              Course Hub
+            </span>
+          </div>
+
+          {/* HERO HEADER BLOCK */}
+          <div className="card" style={{
+            background: 'linear-gradient(135deg, #1e3a8a 0%, #3b82f6 100%)',
+            color: '#ffffff',
+            padding: '32px',
+            borderRadius: '12px',
+            boxShadow: 'var(--shadow-md)',
+            position: 'relative',
+            overflow: 'hidden',
+            border: 'none'
+          }}>
+            <div style={{ position: 'relative', zIndex: 2 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', letterSpacing: '0.05em', background: 'rgba(255,255,255,0.2)', padding: '4px 10px', borderRadius: '4px', textTransform: 'uppercase' }}>
                   {selectedCourse.code}
                 </span>
-                <h2 style={{ fontSize: '1.4rem', marginTop: '8px' }}>{selectedCourse.title}</h2>
+                <span style={{ fontSize: '0.75rem', fontWeight: '700', background: 'var(--success-bg)', color: 'var(--success-text)', padding: '4px 10px', borderRadius: '4px' }}>
+                  Enrolled
+                </span>
               </div>
-              <button 
-                onClick={() => setSelectedCourse(null)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.5rem', cursor: 'pointer', outline: 'none' }}
-              >
-                ✕
-              </button>
-            </div>
+              <h1 style={{ fontSize: '2.2rem', margin: '0 0 10px 0', fontWeight: '800', letterSpacing: '-0.02em', color: '#ffffff' }}>{selectedCourse.title}</h1>
+              <p style={{ opacity: 0.9, fontSize: '1rem', maxWidth: '750px', marginBottom: '20px', lineHeight: '1.6', color: 'rgba(255, 255, 255, 0.9)' }}>
+                {selectedCourse.description}
+              </p>
 
-            {/* TAB SYSTEM NAVIGATION */}
-            <div className="tabs-container" style={{ borderBottom: '1px solid var(--border-color)' }}>
-              <button 
-                onClick={() => { setActiveTab('details'); setSelectedAssignment(null); setSelectedQuiz(null); }}
-                style={{ background: 'none', border: 'none', color: activeTab === 'details' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'details' ? '700' : '500', cursor: 'pointer', fontSize: '0.95rem', borderBottom: activeTab === 'details' ? '2px solid var(--primary)' : 'none', paddingBottom: '10px', transition: 'all 0.2s' }}
-              >
-                📖 Course Info & Members
-              </button>
-              <button 
-                onClick={() => { setActiveTab('assignments'); setSelectedAssignment(null); setSelectedQuiz(null); }}
-                style={{ background: 'none', border: 'none', color: activeTab === 'assignments' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'assignments' ? '700' : '500', cursor: 'pointer', fontSize: '0.95rem', borderBottom: activeTab === 'assignments' ? '2px solid var(--primary)' : 'none', paddingBottom: '10px', transition: 'all 0.2s' }}
-              >
-                <FileText size={16} /> Assignments
-              </button>
-              <button 
-                onClick={() => { setActiveTab('quizzes'); setSelectedAssignment(null); setSelectedQuiz(null); }}
-                style={{ background: 'none', border: 'none', color: activeTab === 'quizzes' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'quizzes' ? '700' : '500', cursor: 'pointer', fontSize: '0.95rem', borderBottom: activeTab === 'quizzes' ? '2px solid var(--primary)' : 'none', paddingBottom: '10px', transition: 'all 0.2s' }}
-              >
-                <ClipboardList size={16} /> Quizzes
-              </button>
-              <button 
-                onClick={() => { setActiveTab('materials'); setSelectedAssignment(null); setSelectedQuiz(null); }}
-                style={{ background: 'none', border: 'none', color: activeTab === 'materials' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'materials' ? '700' : '500', cursor: 'pointer', fontSize: '0.95rem', borderBottom: activeTab === 'materials' ? '2px solid var(--primary)' : 'none', paddingBottom: '10px', transition: 'all 0.2s' }}
-              >
-                <BookOpen size={16} /> Materials
-              </button>
-              {/* Diagnostic tab — lecturer/admin only */}
-              {isLecturer && (
-                <button
-                  onClick={() => {
-                    setActiveTab('diagnostic');
-                    setSelectedAssignment(null);
-                    setSelectedQuiz(null);
-                    fetchDiagnosticTest(selectedCourse._id);
-                    fetchDiagClassResults(selectedCourse._id);
-                  }}
-                  style={{ background: 'none', border: 'none', color: activeTab === 'diagnostic' ? 'var(--primary)' : 'var(--text-muted)', fontWeight: activeTab === 'diagnostic' ? '700' : '500', cursor: 'pointer', fontSize: '0.95rem', borderBottom: activeTab === 'diagnostic' ? '2px solid var(--primary)' : 'none', paddingBottom: '10px', transition: 'all 0.2s' }}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center', fontSize: '0.9rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', padding: '6px 14px', borderRadius: '20px' }}>
+                  <User size={16} />
+                  <span>Lecturer: <strong>{selectedCourse.lecturer?.name || 'Unassigned'}</strong></span>
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(255,255,255,0.1)', padding: '6px 14px', borderRadius: '20px' }}>
+                  <Clock size={16} />
+                  <span>Last Updated: {new Date(selectedCourse.updatedAt || selectedCourse.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </div>
+            {/* Subtle background decoration */}
+            <div style={{ position: 'absolute', right: '-20px', bottom: '-40px', opacity: 0.08, pointerEvents: 'none' }}>
+              <Award size={180} />
+            </div>
+          </div>
+
+          {/* THREE-COLUMN DYNAMIC GRID */}
+          <div style={{ display: 'grid', gridTemplateColumns: '260px 1fr 280px', gap: '24px' }} className="mobile-stack">
+            
+            {/* COLUMN 1: LEFT SIDEBAR NAVIGATION */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <button 
+                  onClick={() => { setActiveTab('details'); setSelectedAssignment(null); setSelectedQuiz(null); }}
+                  className={`btn ${activeTab === 'details' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ justifyContent: 'flex-start', display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', fontWeight: activeTab === 'details' ? '700' : '500' }}
                 >
-                  🎯 Diagnostic
+                  <Info size={16} /> Information
                 </button>
-              )}
+                <button 
+                  onClick={() => { setActiveTab('materials'); setSelectedAssignment(null); setSelectedQuiz(null); }}
+                  className={`btn ${activeTab === 'materials' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ justifyContent: 'flex-start', display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', fontWeight: activeTab === 'materials' ? '700' : '500' }}
+                >
+                  <BookOpen size={16} /> Materials
+                </button>
+                <button 
+                  onClick={() => { setActiveTab('quizzes'); setSelectedAssignment(null); setSelectedQuiz(null); }}
+                  className={`btn ${activeTab === 'quizzes' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ justifyContent: 'flex-start', display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', fontWeight: activeTab === 'quizzes' ? '700' : '500' }}
+                >
+                  <ClipboardList size={16} /> Quizzes
+                </button>
+                <button 
+                  onClick={() => { setActiveTab('assignments'); setSelectedAssignment(null); setSelectedQuiz(null); }}
+                  className={`btn ${activeTab === 'assignments' ? 'btn-primary' : 'btn-secondary'}`}
+                  style={{ justifyContent: 'flex-start', display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', fontWeight: activeTab === 'assignments' ? '700' : '500' }}
+                >
+                  <FileText size={16} /> Assignments
+                </button>
+                {isLecturer && (
+                  <button 
+                    onClick={() => {
+                      setActiveTab('diagnostic');
+                      setSelectedAssignment(null);
+                      setSelectedQuiz(null);
+                      fetchDiagnosticTest(selectedCourse._id);
+                      fetchDiagClassResults(selectedCourse._id);
+                    }}
+                    className={`btn ${activeTab === 'diagnostic' ? 'btn-primary' : 'btn-secondary'}`}
+                    style={{ justifyContent: 'flex-start', display: 'flex', alignItems: 'center', gap: '10px', width: '100%', textAlign: 'left', fontWeight: activeTab === 'diagnostic' ? '700' : '500' }}
+                  >
+                    <Award size={16} /> Diagnostic Test
+                  </button>
+                )}
+              </div>
             </div>
 
-            {/* TAB CONTENT 1: COURSE MEMBERS DETAILS */}
-            {activeTab === 'details' && (
+            {/* COLUMN 2: MIDDLE WORKSPACE CARD */}
+            <div className="card" style={{ padding: '30px', minHeight: '450px' }}>
+              {activeTab === 'details' && (
               <div className="fade-in">
                 <h3 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: '8px' }}>
                   Description
@@ -1283,21 +1310,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                   )}
                 </div>
 
-                {user.role === 'admin' && (
-                  <div style={{ marginTop: '30px', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
-                    <h4 style={{ fontSize: '0.9rem', color: 'var(--error)', marginBottom: '10px' }}>Danger Zone</h4>
-                    <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '15px' }}>
-                      Permanently delete this course and all associated materials, quizzes, and submissions. This action cannot be undone.
-                    </p>
-                    <button 
-                      className="btn btn-danger" 
-                      onClick={() => handleDeleteCourse(selectedCourse._id)}
-                      disabled={deleteCourseLoading}
-                    >
-                      {deleteCourseLoading ? 'Deleting...' : 'Delete Course'}
-                    </button>
-                  </div>
-                )}
               </div>
             )}
 
@@ -1997,11 +2009,11 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                       className="form-input"
                       style={{ padding: '4px 10px', fontSize: '0.9rem', width: 'auto' }}
                     >
-                      <option value="adaptive">🧠 Adaptive (Recommended)</option>
+                      <option value="adaptive">Adaptive (Recommended)</option>
                       <option value="all">All Levels</option>
-                      <option value="Beginner">🌱 Beginner</option>
-                      <option value="Intermediate">🔥 Intermediate</option>
-                      <option value="Advanced">🚀 Advanced</option>
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
                     </select>
                   </div>
                   {isLecturer && (
@@ -2017,8 +2029,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                 {/* Level Badge for Students */}
                 {isStudent && myLevel && (
                   <div style={{ marginBottom: '20px', display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: myLevel === 'Advanced' ? '#fce4ec' : myLevel === 'Intermediate' ? '#fff8e1' : '#e8f5e9', borderRadius: '20px' }}>
-                    <span style={{ fontSize: '1.1rem' }}>{myLevel === 'Advanced' ? '🚀' : myLevel === 'Intermediate' ? '🔥' : '🌱'}</span>
-                    <span style={{ fontWeight: '700', color: myLevel === 'Advanced' ? '#c62828' : myLevel === 'Intermediate' ? '#f57f17' : '#2e7d32', fontSize: '0.9rem' }}>Your Level: {myLevel}</span>
+                    <strong>Current Level:</strong> {myLevel || 'Unknown'}
                     <button
                       onClick={() => { setDiagnosticCourseId(selectedCourse._id); setDiagnosticCourseName(selectedCourse.title); setShowDiagnostic(true); }}
                       style={{ background: 'none', border: 'none', fontSize: '0.8rem', color: 'var(--text-secondary)', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
@@ -2027,7 +2038,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                 )}
                 {isStudent && !myLevel && (
                   <div style={{ marginBottom: '20px', padding: '12px 16px', background: 'var(--primary-light)', borderRadius: 'var(--radius)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>📋 Take the diagnostic test to unlock personalised materials.</span>
+                    <span style={{ fontSize: '0.9rem', color: 'var(--text-secondary)' }}>Take the diagnostic test to unlock personalised materials.</span>
                     <button
                       className="btn btn-primary"
                       style={{ padding: '6px 14px', fontSize: '0.85rem' }}
@@ -2038,7 +2049,6 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
                 {adaptiveStats && (
                   <div className="fade-in" style={{ padding: '16px', background: 'var(--primary-light)', color: 'var(--primary)', borderRadius: 'var(--radius)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                    <div style={{ fontSize: '1.8rem' }}>🧠</div>
                     <div>
                       <h4 style={{ margin: '0 0 4px 0', fontSize: '1rem' }}>Adaptive Learning Engine Active</h4>
                       {adaptiveStats.assessmentCount > 0 ? (
@@ -2061,10 +2071,10 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                       <div className="form-group">
                         <label>Difficulty</label>
                         <select className="form-input" value={matDifficulty} onChange={e => setMatDifficulty(e.target.value)}>
-                          <option value="Beginner">🌱 Beginner</option>
-                          <option value="Intermediate">🔥 Intermediate</option>
-                          <option value="Advanced">🚀 Advanced</option>
-                          <option value="All">📌 All Levels (Everyone sees this)</option>
+                          <option value="Beginner">Beginner</option>
+                          <option value="Intermediate">Intermediate</option>
+                          <option value="Advanced">Advanced</option>
+                          <option value="All">All Levels (Everyone sees this)</option>
                         </select>
                       </div>
                     </div>
@@ -2123,7 +2133,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                             background: mat.difficultyLevel === 'Advanced' ? '#fce4ec' : mat.difficultyLevel === 'Intermediate' ? '#fff8e1' : mat.difficultyLevel === 'All' ? '#e3f2fd' : '#e8f5e9',
                             color: mat.difficultyLevel === 'Advanced' ? '#c62828' : mat.difficultyLevel === 'Intermediate' ? '#f57f17' : mat.difficultyLevel === 'All' ? '#1565c0' : '#2e7d32',
                           }}>
-                            {mat.difficultyLevel === 'Beginner' ? '🌱 Beginner' : mat.difficultyLevel === 'Intermediate' ? '🔥 Intermediate' : mat.difficultyLevel === 'Advanced' ? '🚀 Advanced' : '📌 All Levels'}
+                            {mat.difficultyLevel === 'Beginner' ? 'Beginner' : mat.difficultyLevel === 'Intermediate' ? 'Intermediate' : mat.difficultyLevel === 'Advanced' ? 'Advanced' : 'All Levels'}
                           </span>
                           <span style={{ fontSize: '1.2rem' }}>
                             {mat.contentType === 'pdf' ? 'PDF' : mat.contentType === 'video' ? 'Video' : 'Article'}
@@ -2163,7 +2173,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
             {activeTab === 'diagnostic' && isLecturer && (
               <div className="fade-in">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                  <h3 style={{ fontSize: '1.2rem', margin: 0 }}>🎯 Diagnostic Test Manager</h3>
+                  <h3 style={{ fontSize: '1.2rem', margin: 0 }}>Diagnostic Test Manager</h3>
                   <button
                     className="btn btn-primary"
                     onClick={() => {
@@ -2184,12 +2194,12 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                   <p style={{ color: 'var(--text-secondary)' }}>Loading class results...</p>
                 ) : diagClassResults && diagClassResults.summary ? (
                   <div className="card" style={{ padding: '20px', marginBottom: '24px' }}>
-                    <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem' }}>📊 Class Level Breakdown</h4>
+                    <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem' }}>Class Level Breakdown</h4>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
                       {[
-                        { label: '🌱 Beginner', key: 'Beginner', color: '#2e7d32', bg: '#e8f5e9' },
-                        { label: '🔥 Intermediate', key: 'Intermediate', color: '#f57f17', bg: '#fff8e1' },
-                        { label: '🚀 Advanced', key: 'Advanced', color: '#c62828', bg: '#fce4ec' },
+                        { label: 'Beginner', key: 'Beginner', color: '#2e7d32', bg: '#e8f5e9' },
+                        { label: 'Intermediate', key: 'Intermediate', color: '#f57f17', bg: '#fff8e1' },
+                        { label: 'Advanced', key: 'Advanced', color: '#c62828', bg: '#fce4ec' },
                       ].map(({ label, key, color, bg }) => (
                         <div key={key} style={{ background: bg, borderRadius: 'var(--radius)', padding: '16px', textAlign: 'center' }}>
                           <div style={{ fontSize: '1.8rem', fontWeight: '800', color }}>{diagClassResults.summary[key] || 0}</div>
@@ -2233,7 +2243,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                 {!showDiagCreateForm && existingDiagTest && (
                   <div className="card" style={{ padding: '20px', marginBottom: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                      <h4 style={{ margin: 0, fontSize: '1rem' }}>📋 Current Test: {existingDiagTest.title}</h4>
+                      <h4 style={{ margin: 0, fontSize: '1rem' }}>Current Test: {existingDiagTest.title}</h4>
                       <span style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{existingDiagTest.questions.length} questions</span>
                     </div>
                     {existingDiagTest.questions.map((q, qi) => (
@@ -2241,7 +2251,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                         <p style={{ margin: '0 0 8px 0', fontWeight: '600', fontSize: '0.9rem' }}>Q{qi + 1}. {q.questionText}</p>
                         {q.options.map((opt, oi) => (
                           <div key={oi} style={{ fontSize: '0.85rem', color: oi === q.correctAnswerIndex ? '#2e7d32' : 'var(--text-secondary)', fontWeight: oi === q.correctAnswerIndex ? '700' : '400', marginLeft: '12px' }}>
-                            {oi === q.correctAnswerIndex ? '✅' : '○'} {opt}
+                            {oi === q.correctAnswerIndex ? 'Correct' : ''} {opt}
                           </div>
                         ))}
                       </div>
@@ -2251,7 +2261,7 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
 
                 {!showDiagCreateForm && !existingDiagTest && !diagTestLoading && (
                   <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-secondary)' }}>
-                    <div style={{ fontSize: '3rem', marginBottom: '12px' }}>📝</div>
+                    
                     <p>No diagnostic test created yet. Click <strong>"Create Test"</strong> above to add one.</p>
                     <p style={{ fontSize: '0.85rem' }}>Students will be prompted to take it automatically when they enroll.</p>
                   </div>
@@ -2345,14 +2355,83 @@ const Dashboard = ({ token, user, logout, goToProfile }) => {
                     ))}
 
                     <button type="submit" className="btn btn-primary" disabled={diagFormLoading} style={{ width: '100%', padding: '12px', marginTop: '8px' }}>
-                      {diagFormLoading ? 'Saving...' : existingDiagTest ? '💾 Update Test' : '💾 Save & Publish Test'}
+                      {diagFormLoading ? 'Saving...' : existingDiagTest ? 'Update Test' : 'Save & Publish Test'}
                     </button>
                   </form>
                 )}
               </div>
             )}
 
+            </div>
+
+            {/* COLUMN 3: RIGHT SIDEBAR ADAPTIVE PANELS */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              
+              {/* ADAPTIVE INSIGHT PANEL */}
+              <div className="card" style={{ padding: '20px', borderLeft: '4px solid var(--accent)' }}>
+                <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Award size={16} /> Adaptive Insight
+                </h4>
+                <div style={{ marginBottom: '15px' }}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Current Learning Level:</span>
+                  <div style={{ 
+                    background: myLevel === 'Advanced' ? 'rgba(22, 163, 74, 0.1)' : myLevel === 'Intermediate' ? 'rgba(249, 115, 22, 0.1)' : 'rgba(37, 99, 235, 0.1)', 
+                    color: myLevel === 'Advanced' ? '#16a34a' : myLevel === 'Intermediate' ? '#ea580c' : '#2563eb', 
+                    border: myLevel === 'Advanced' ? '1px solid rgba(22, 163, 74, 0.2)' : myLevel === 'Intermediate' ? '1px solid rgba(249, 115, 22, 0.2)' : '1px solid rgba(37, 99, 235, 0.2)',
+                    display: 'inline-block', 
+                    padding: '4px 12px', 
+                    borderRadius: '20px', 
+                    fontWeight: '700', 
+                    fontSize: '0.85rem',
+                    marginTop: '6px',
+                    textAlign: 'center',
+                    textTransform: 'uppercase'
+                  }}>
+                    {myLevel || 'Assessing...'}
+                  </div>
+                </div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.5', margin: 0 }}>
+                  {myLevel === 'Beginner' && 'Focusing on foundations. Review beginner readings and starter quizzes to strengthen your coding basics.'}
+                  {myLevel === 'Intermediate' && 'Expanding skills. Dive into intermediate assignments and explore topics deeper.'}
+                  {myLevel === 'Advanced' && 'Excellent! Tackling advanced challenges. Try mock projects and quiz challenges.'}
+                  {!myLevel && 'Complete the course Diagnostic Test to calibrate your study path recommendations.'}
+                </p>
+              </div>
+
+              {/* Progress Metrics */}
+              <div className="card" style={{ padding: '20px' }}>
+                <h4 style={{ fontSize: '0.85rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Trophy size={16} /> Progress Metrics
+                </h4>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                      <span>Quizzes Available</span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{quizzes.length}</strong>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>
+                      <span>Assignments Active</span>
+                      <strong style={{ color: 'var(--text-primary)' }}>{assignments.length}</strong>
+                    </div>
+                  </div>
+
+                  {adaptiveStats && (
+                    <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '12px', marginTop: '4px' }}>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '4px' }}>Adaptive Base Level</div>
+                      <div style={{ fontSize: '1.1rem', fontWeight: '700', color: 'var(--primary)', textTransform: 'uppercase' }}>{adaptiveStats.level}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+            </div>
+
           </div>
+
         </div>
       )}
 

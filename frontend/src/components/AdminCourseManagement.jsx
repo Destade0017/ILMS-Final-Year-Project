@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { LogOut, AlertCircle, CheckCircle, FileText, ClipboardList, BookOpen, Users, LayoutDashboard, Settings } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { AlertCircle, CheckCircle } from 'lucide-react';
 
 const AdminCourseManagement = ({ token }) => {
   const [courses, setCourses] = useState([]);
@@ -13,10 +13,6 @@ const AdminCourseManagement = ({ token }) => {
   const [selectedCourseId, setSelectedCourseId] = useState(null);
   const [selectedLecturerId, setSelectedLecturerId] = useState('');
   const [formLoading, setFormLoading] = useState(false);
-
-  useEffect(() => {
-    fetchData();
-  }, []);
 
   const fetchData = async () => {
     setLoading(true);
@@ -45,6 +41,12 @@ const AdminCourseManagement = ({ token }) => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchData();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [token]);
 
   const handleOpenAssignForm = (course) => {
     setSelectedCourseId(course._id);
@@ -104,6 +106,27 @@ const AdminCourseManagement = ({ token }) => {
       if (!res.ok) throw new Error(data.message || 'Failed to remove lecturer');
 
       setSuccessMsg('Lecturer unassigned successfully');
+      fetchData();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDeleteCourse = async (courseId) => {
+    if (!window.confirm('Are you sure you want to permanently delete this course? This action cannot be undone and will delete all associated materials, quizzes, and results.')) return;
+    
+    setError('');
+    setSuccessMsg('');
+    
+    try {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5001'}/api/courses/${courseId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Failed to delete course');
+
+      setSuccessMsg('Course and all associated data deleted successfully');
       fetchData();
     } catch (err) {
       setError(err.message);
@@ -200,12 +223,19 @@ const AdminCourseManagement = ({ token }) => {
                   {c.lecturer && (
                     <button 
                       className="btn" 
-                      style={{ padding: '4px 10px', fontSize: '0.8rem', background: '#fee2e2', color: '#ef4444' }}
+                      style={{ padding: '4px 10px', fontSize: '0.8rem', background: '#fee2e2', color: '#ef4444', marginRight: '5px' }}
                       onClick={() => handleRemoveLecturer(c._id)}
                     >
                       Unassign
                     </button>
                   )}
+                  <button 
+                    className="btn btn-danger" 
+                    style={{ padding: '4px 10px', fontSize: '0.8rem' }}
+                    onClick={() => handleDeleteCourse(c._id)}
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}

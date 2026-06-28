@@ -1,25 +1,21 @@
-import React, { useState, useEffect } from 'react';
-import { CheckCircle, AlertCircle, ArrowRight, Loader } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { AlertCircle, ArrowRight, Loader, Trophy, FileText } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:5001';
 
 const levelColors = {
-  Beginner: { bg: '#e8f5e9', color: '#2e7d32', label: '🌱 Beginner' },
-  Intermediate: { bg: '#fff8e1', color: '#f57f17', label: '🔥 Intermediate' },
-  Advanced: { bg: '#fce4ec', color: '#c62828', label: '🚀 Advanced' },
+  Beginner: { bg: '#e8f5e9', color: '#2e7d32', label: 'Beginner' },
+  Intermediate: { bg: '#fff8e1', color: '#f57f17', label: 'Intermediate' },
+  Advanced: { bg: '#fce4ec', color: '#c62828', label: 'Advanced' },
 };
 
-const DiagnosticTest = ({ token, courseId, courseName, onComplete, onSkip }) => {
+const DiagnosticTest = ({ token, courseId, onComplete, onSkip }) => {
   const [test, setTest] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [answers, setAnswers] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [result, setResult] = useState(null); // after submission
-
-  useEffect(() => {
-    fetchTest();
-  }, [courseId]);
 
   const fetchTest = async () => {
     setLoading(true);
@@ -35,12 +31,18 @@ const DiagnosticTest = ({ token, courseId, courseName, onComplete, onSkip }) => 
         return;
       }
       setTest(data.data);
-    } catch (err) {
+    } catch {
       setError('Failed to load the diagnostic test.');
     } finally {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchTest();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [courseId]);
 
   const handleSelect = (questionIndex, optionIndex) => {
     setAnswers((prev) => ({ ...prev, [questionIndex]: optionIndex }));
@@ -93,7 +95,9 @@ const DiagnosticTest = ({ token, courseId, courseName, onComplete, onSkip }) => 
     const levelStyle = levelColors[result.level] || levelColors.Beginner;
     return (
       <div className="fade-in" style={{ maxWidth: '600px', margin: '0 auto', padding: '40px 20px', textAlign: 'center' }}>
-        <div style={{ fontSize: '4rem', marginBottom: '16px' }}>🎉</div>
+        <div style={{ marginBottom: '16px', color: 'var(--success)', display: 'flex', justifyContent: 'center' }}>
+          <Trophy size={64} />
+        </div>
         <h2 style={{ fontSize: '1.6rem', marginBottom: '8px' }}>Diagnostic Complete!</h2>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '30px' }}>
           You scored <strong>{result.score}%</strong> ({result.correct}/{result.total} correct)
@@ -126,7 +130,9 @@ const DiagnosticTest = ({ token, courseId, courseName, onComplete, onSkip }) => 
   if (error || !test) {
     return (
       <div className="fade-in" style={{ maxWidth: '500px', margin: '0 auto', padding: '60px 20px', textAlign: 'center' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>📋</div>
+        <div style={{ marginBottom: '16px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'center' }}>
+          <FileText size={48} />
+        </div>
         <h2 style={{ fontSize: '1.4rem', marginBottom: '8px' }}>No Diagnostic Test Yet</h2>
         <p style={{ color: 'var(--text-secondary)', marginBottom: '30px' }}>
           {error || 'The lecturer has not created a diagnostic test for this course.'}
@@ -146,7 +152,7 @@ const DiagnosticTest = ({ token, courseId, courseName, onComplete, onSkip }) => 
     <div className="fade-in" style={{ maxWidth: '700px', margin: '0 auto', padding: '20px' }}>
       {/* Header */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-        <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🎯</div>
+        
         <h2 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{test.title}</h2>
         <p style={{ color: 'var(--text-secondary)', fontSize: '0.95rem', maxWidth: '500px', margin: '0 auto' }}>
           {test.description}

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Login from './components/Login';
 import Register from './components/Register';
 import ForgotPassword from './components/ForgotPassword';
@@ -7,41 +7,41 @@ import Dashboard from './components/Dashboard';
 import AdminDashboard from './components/AdminDashboard';
 import ProfileSettings from './components/ProfileSettings';
 function App() {
-  const [token, setToken] = useState(null);
-  const [user, setUser] = useState(null);
-  const [authView, setAuthView] = useState('login'); // 'login' | 'register' | 'forgot' | 'reset'
-  const [resetToken, setResetToken] = useState('');
-  const [appLoading, setAppLoading] = useState(true);
-  const [mainView, setMainView] = useState('dashboard');
-
-  // Check localStorage for existing session on load & handle url reset parameters
-  useEffect(() => {
-    const cachedToken = localStorage.getItem('token');
+  const [token, setToken] = useState(() => localStorage.getItem('token'));
+  const [user, setUser] = useState(() => {
     const cachedUser = localStorage.getItem('user');
-
-    if (cachedToken && cachedUser) {
-      setToken(cachedToken);
-      setUser(JSON.parse(cachedUser));
+    return cachedUser ? JSON.parse(cachedUser) : null;
+  });
+  
+  const [authView, setAuthView] = useState(() => {
+    const path = window.location.pathname;
+    if (path.startsWith('/reset-password/') && path.length > 16) {
+      return 'reset';
     }
-    
-    // Parse password reset URL
+    return 'login';
+  });
+  
+  const [resetToken, setResetToken] = useState(() => {
     const path = window.location.pathname;
     if (path.startsWith('/reset-password/')) {
-      const tokenFromPath = path.replace('/reset-password/', '');
-      if (tokenFromPath) {
-        setResetToken(tokenFromPath);
-        setAuthView('reset');
-        window.history.replaceState({}, document.title, '/');
-      }
+      return path.replace('/reset-password/', '');
     }
+    return '';
+  });
+  
+  const [mainView, setMainView] = useState('dashboard');
 
-    setAppLoading(false);
-  }, []);
+  useEffect(() => {
+    if (authView === 'reset' && resetToken) {
+      window.history.replaceState({}, document.title, '/');
+    }
+  }, [authView, resetToken]);
 
   const setAuth = (newToken, newUser) => {
     setToken(newToken);
     setUser(newUser);
   };
+
 
   const logout = () => {
     localStorage.removeItem('token');
@@ -51,13 +51,7 @@ function App() {
     setAuthView('login');
   };
 
-  if (appLoading) {
-    return (
-      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.2rem', color: 'var(--text-secondary)' }}>
-        Initializing Learnova application...
-      </div>
-    );
-  }
+
 
   // If not logged in, render auth views
   if (!token) {
